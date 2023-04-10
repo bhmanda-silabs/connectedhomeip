@@ -23,6 +23,10 @@
 
 #include <limits>
 
+#define SL_WIFI_SSID "matter_netgear"
+#define SL_WIFI_PSK  "matter@123"
+#define SL_ONNETWORK_PAIRING 1
+
 using namespace ::chip;
 using namespace ::chip::DeviceLayer::Internal;
 

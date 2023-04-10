@@ -164,6 +164,8 @@ else
                     optArgs+="use_SiWx917=true "
                 elif [ "$2" = "wf200" ]; then
                     optArgs+="use_wf200=true "
+                elif [ "$2" = "wifisdk" ]; then
+                    optArgs+="use_wifisdk=true "
                 else
                     echo "Wifi usage: --wifi rs9116|SiWx917|wf200"
                     exit 1

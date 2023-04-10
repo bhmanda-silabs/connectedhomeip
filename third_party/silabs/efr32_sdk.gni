@@ -22,9 +22,13 @@ import("silabs_board.gni")
 
 if (use_rs9116) {
   wifi_sapi_root = "${chip_root}/third_party/silabs/wiseconnect-wifi-bt-sdk"
-} else {
-  wifi_sapi_root = "${chip_root}/third_party/silabs/wisemcu-wifi-bt-sdk"
+} else if (use_SiWx917){
+   wifi_sapi_root = "${chip_root}/third_party/silabs/wisemcu-wifi-bt-sdk"
+ }
+else{
+  sl_wifi_sdk_root = "${chip_root}/third_party/silabs/sl_net/components"
 }
+examples_plat_dir = "${chip_root}/examples/platform/silabs/efr32"
 
 declare_args() {
   # Location of the efr32 SDK.
@@ -174,6 +178,21 @@ template("efr32_sdk") {
       "${efr32_sdk_root}/platform/driver/debug/inc",
       "${silabs_gen_folder}/config",
       "${silabs_gen_folder}/autogen",
+      "${examples_plat_dir}/rs911x",
+  "${examples_plat_dir}/rs911x/hal",
+  "${sl_wifi_sdk_root}/sl_wifi/inc",
+  "${sl_wifi_sdk_root}/si91x/inc",
+  "${sl_wifi_sdk_root}/si91x/memory",
+  "${sl_wifi_sdk_root}/si91x/sl_net/inc",
+  "${sl_wifi_sdk_root}/service/network_manager/inc",
+  "${sl_wifi_sdk_root}/sl_net/gsdk/common/inc",
+  "${sl_wifi_sdk_root}/sl_net/gsdk/emlib/inc",
+  "${sl_wifi_sdk_root}/wifi_support/inc",
+  "${sl_wifi_sdk_root}/wifi_support/efr32mg12",
+  "${sl_wifi_sdk_root}/sl_peripheral/inc",
+  "${sl_wifi_sdk_root}/protocol/wifi/inc",
+  "${examples_plat_dir}/rs911x",
+  "${examples_plat_dir}/rs911x/hal",
     ]
 
     if (slc_generate || slc_reuse_files) {
@@ -246,7 +265,7 @@ template("efr32_sdk") {
       if (chip_enable_wifi_ipv4) {
         defines += [ "CHIP_DEVICE_CONFIG_ENABLE_IPV4=1" ]
       }
-      if (use_rs9116 || use_SiWx917) {
+      if (use_rs9116 || use_SiWx917 || use_wifisdk) {
         defines += [
           "SL_HEAP_SIZE=32768",
           "SL_WIFI=1",
@@ -256,6 +275,8 @@ template("efr32_sdk") {
           "RSI_WLAN_ENABLE",
           "RSI_SPI_INTERFACE",
           "RSI_WITH_OS",
+          "SL_WIFI_ALLOCATE_COMMAND_BUFFER_WAIT_TIME",
+          "WIFI_DEBUG_ENABLED",
         ]
       }
       if (use_SiWx917) {
@@ -697,6 +718,17 @@ template("efr32_sdk") {
       "${silabs_gen_folder}/autogen/sl_board_default_init.c",
       "${silabs_gen_folder}/autogen/sl_device_init_clocks.c",
       "${silabs_gen_folder}/autogen/sl_event_handler.c",
+      "${sl_wifi_sdk_root}/si91x/threading/sli_si91x_multithreaded.c",
+  "${sl_wifi_sdk_root}/protocol/wifi/src/sl_wifi_callback_framework.c",
+  "${sl_wifi_sdk_root}/si91x/memory/malloc_buffers.c",
+  "${sl_wifi_sdk_root}/si91x/spi_interface/sl_si91x_spi_driver.c",
+#  "${sl_wifi_sdk}/sl_net/src/sl_net.c",
+  "${sl_wifi_sdk_root}/si91x/src/sl_si91x_driver.c",
+  "${sl_wifi_sdk_root}/protocol/wifi/si91x/sl_wifi.c",
+  "${sl_wifi_sdk_root}/si91x/src/sl_rsi_utility.c",
+  "${sl_wifi_sdk_root}/wifi_support/src/sl_utility.c",
+  "${sl_wifi_sdk_root}/si91x/sl_net/src/sl_net_si91x.c",
+  "${sl_wifi_sdk_root}/service/network_manager/src/sl_net_basic_credentials.c",
     ]
     if (enable_dic) {
       sources += [

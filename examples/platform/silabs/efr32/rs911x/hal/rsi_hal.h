@@ -17,8 +17,11 @@
 
 #ifndef _HAL_RSI_HAL_H_
 #define _HAL_RSI_HAL_H_
-#include "rsi_board_configuration.h"
+#include "sl_board_configuration.h"
 
+//wifi-sdk
+#define RSI_TRUE  1
+#define RSI_FALSE 0
 #define RSI_HAL_NO_COM_PORT /* This will be done by the project */
 
 /* Should be enums */
