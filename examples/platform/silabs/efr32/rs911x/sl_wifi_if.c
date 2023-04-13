@@ -393,7 +393,7 @@ static int32_t wfx_rsi_init(void)
 {
   sl_status_t status;
 
-  status = sl_wifi_init(&sl_wifi_default_concurrent_configuration  , default_wifi_event_handler);
+  status = sl_wifi_init(&sl_wifi_default_client_configuration  , default_wifi_event_handler);
   if (status != SL_STATUS_OK) {
     return status;
   }
@@ -767,9 +767,47 @@ void wfx_rsi_task(void * arg)
         }
         if (flags & WFX_EVT_STA_CONN)
         {
-            /*
-             * Initiate the Join command (assuming we have been provisioned)
-             */
+        #if 0
+        uint32_t sampledata[100];
+         uint32_t count =0;
+/* make buffer point to useful data, and then: */
+    for (i=0; i < 100; ++i)
+    sampledata[i] = i*10;
+    for(count=0;count<10;count++)
+    {
+    /*
+    * Initiate the Join command (assuming we have been provisioned)
+    */
+        sl_wifi_buffer_t *buffer;
+        sl_si91x_packet_t *packet;
+        sl_status_t status = SL_STATUS_OK;
+        uint32_t data_length = 100;
+        /* Confirm if packet is allocated */
+
+        status = sl_si91x_allocate_command_buffer(&buffer,
+                                            (void **)&packet,
+                                            sizeof(sl_si91x_packet_t) + 100,
+                                            SL_WIFI_ALLOCATE_COMMAND_BUFFER_WAIT_TIME);
+        VERIFY_STATUS_AND_RETURN(status);
+        if (packet == NULL) {
+           WFX_RSI_LOG("EN-RSI:No buf");
+           return SL_STATUS_ALLOCATION_FAILED;
+        }
+        memset(packet->desc, 0, sizeof(packet->desc));
+        if (sampledata != NULL) {
+           memcpy(packet->data, sampledata, data_length);
+        }
+
+        // Fill frame type
+        packet->length  = data_length & 0xFFF;
+        packet->command =  0x1;
+        if (sl_si91x_driver_send_data_packet(SI91X_WLAN_CMD_QUEUE,buffer, 1000))
+        {
+            WFX_RSI_LOG("Wifi send fail");
+            return ;
+        }
+    }
+#endif
             WFX_RSI_LOG("%s: starting LwIP STA", __func__);
             wfx_rsi.dev_state |= WFX_RSI_ST_STA_CONNECTED;
 #ifndef RS911X_SOCKETS
@@ -960,8 +998,6 @@ void wfx_rsi_pkt_add_data(void * p, uint8_t * buf, uint16_t len, uint16_t off)
     memcpy(((char *) pkt->data) + off, buf, len);
 */
     sl_si91x_packet_t * pkt;
-    memset(pkt->desc, 0, sizeof(pkt->desc));
-
     pkt = (sl_si91x_packet_t *) p;
     memcpy(((char *) pkt->data) + off, buf, len);
 }

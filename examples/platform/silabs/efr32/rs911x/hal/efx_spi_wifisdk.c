@@ -70,24 +70,24 @@ extern void gpio_interrupt(uint8_t interrupt_number);
 #include "sl_power_manager.h"
 #endif
 
-StaticSemaphore_t xEfxSpiIntfSemaBuffer;
-static SemaphoreHandle_t spi_sem;
-
 #if defined(EFR32MG12)
 #include "sl_spidrv_exp_config.h"
 extern SPIDRV_Handle_t sl_spidrv_exp_handle;
-#endif
-
-#if defined(EFR32MG24)
+#define SPI_HANDLE sl_spidrv_exp_handle
+#elif defined(EFR32MG24)
 #include "sl_spidrv_eusart_exp_config.h"
 extern SPIDRV_Handle_t sl_spidrv_eusart_exp_handle;
+#define SPI_HANDLE sl_spidrv_eusart_exp_handle
+#else
+#error "Unknown platform"
 #endif
 
-static unsigned int tx_dma_channel;
-static unsigned int rx_dma_channel;
+StaticSemaphore_t xEfxSpiIntfSemaBuffer;
+static SemaphoreHandle_t spiTransferLock;
+static TaskHandle_t spiInitiatorTaskHandle = NULL;
 
-static uint32_t dummy_data; /* Used for DMA - when results don't matter */
 extern void rsi_gpio_irq_cb(uint8_t irqnum);
+
 //#define RS911X_USE_LDMA
 
 /********************************************************
@@ -156,20 +156,8 @@ void si91x_host_enable_high_speed_bus()
  ****************************************************************/
 void rsi_hal_board_init(void)
 {
-    spi_sem = xSemaphoreCreateBinaryStatic(&xEfxSpiIntfSemaBuffer);
-    xSemaphoreGive(spi_sem);
-
-    /* Assign DMA channel from Handle*/
-#if defined(EFR32MG12)
-    /* MG12 + rs9116 combination uses USART driver */
-    tx_dma_channel = sl_spidrv_exp_handle->txDMACh;
-    rx_dma_channel = sl_spidrv_exp_handle->rxDMACh;
-
-#elif defined(EFR32MG24)
-    /* MG24 + rs9116 combination uses EUSART driver */
-    tx_dma_channel = sl_spidrv_eusart_exp_handle->txDMACh;
-    rx_dma_channel = sl_spidrv_eusart_exp_handle->rxDMACh;
-#endif
+    spiTransferLock = xSemaphoreCreateBinaryStatic(&xEfxSpiIntfSemaBuffer);
+    xSemaphoreGive(spiTransferLock);
 
     /* GPIO INIT of MG12 & MG24 : Reset, Wakeup, Interrupt */
     WFX_RSI_LOG("RSI_HAL: init GPIO");
@@ -180,6 +168,7 @@ void rsi_hal_board_init(void)
     sl_wfx_host_reset_chip();
     WFX_RSI_LOG("RSI_HAL: Init done");
 }
+
 // wifi-sdk
 sl_status_t si91x_host_bus_init(void)
 {
@@ -188,6 +177,99 @@ sl_status_t si91x_host_bus_init(void)
     return SL_STATUS_OK;
 }
 
+/*****************************************************************************
+ *@brief
+ *    Spi dma transfer is complete Callback
+ *    Notify the task that initiated the SPI transfer that it is completed.
+ *    The callback needs is a SPIDRV_Callback_t function pointer type
+ * @param[in] pxHandle: spidrv instance handle
+ * @param[in] transferStatus: Error code linked to the completed spi transfer. As master, the return code is irrelevant
+ * @param[in] lCount: number of bytes transferred.
+ *
+ * @return
+ *    None
+ ******************************************************************************/
+static void spi_dmaTransfertComplete(SPIDRV_HandleData_t * pxHandle, Ecode_t transferStatus, int itemsTransferred)
+{
+    configASSERT(spiInitiatorTaskHandle != NULL);
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    vTaskNotifyGiveFromISR(spiInitiatorTaskHandle, &xHigherPriorityTaskWoken);
+    spiInitiatorTaskHandle = NULL;
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+}
+
+/*********************************************************************
+ * @fn   int16_t rsi_spi_transfer(uint8_t *tx_buf, uint8_t *rx_buf, uint16_t xlen, uint8_t mode)
+ * @brief
+ *       Do a SPI transfer - Mode is 8/16 bit - But every 8 bit is aligned
+ * @param[in] tx_buf:
+ * @param[in] rx_buf:
+ * @param[in] xlen:
+ * @param[in] mode:
+ * @return
+ *        None
+ **************************************************************************/
+sl_status_t si91x_host_spi_transfer(const void *tx_buf, void *rx_buf, uint16_t xlen)
+{
+    if (xlen <= MIN_XLEN || (tx_buf == NULL && rx_buf == NULL)) // at least one buffer needs to be provided
+    {
+        return RSI_ERROR_INVALID_PARAM;
+    }
+
+   // (void) mode; // currently not used;
+    error_t rsiError = RSI_ERROR_NONE;
+
+    if (xSemaphoreTake(spiTransferLock, portMAX_DELAY) != pdTRUE)
+    {
+        return RSI_ERROR_SPI_BUSY;
+    }
+
+    configASSERT(spiInitiatorTaskHandle == NULL); // No other task should currently be waiting for the dma completion
+    spiInitiatorTaskHandle = xTaskGetCurrentTaskHandle();
+
+    Ecode_t spiError;
+    if (tx_buf == NULL) // Rx operation only
+    {
+        spiError = SPIDRV_MReceive(SPI_HANDLE, rx_buf, xlen, spi_dmaTransfertComplete);
+    }
+    else if (rx_buf == NULL) // Tx operation only
+    {
+        spiError = SPIDRV_MTransmit(SPI_HANDLE, tx_buf, xlen, spi_dmaTransfertComplete);
+    }
+    else // Tx and Rx operation
+    {
+        spiError = SPIDRV_MTransfer(SPI_HANDLE, tx_buf, rx_buf, xlen, spi_dmaTransfertComplete);
+    }
+
+    if (spiError == ECODE_EMDRV_SPIDRV_OK)
+    {
+        // rsi implementation expect a synchronous operation
+        // wait for the notification that the dma completed in a block state.
+        // it does not consume any CPU time.
+        if (ulTaskNotifyTake(pdTRUE, RSI_SEM_BLOCK_MIN_TIMER_VALUE_MS) != pdPASS)
+        {
+            int itemsTransferred = 0;
+            int itemsRemaining   = 0;
+            SPIDRV_GetTransferStatus(SPI_HANDLE, &itemsTransferred, &itemsRemaining);
+            WFX_RSI_LOG("SPI transfert timed out %d/%d (rx%x rx%x)", itemsTransferred, itemsRemaining, (uint32_t) tx_buf,
+                        (uint32_t) rx_buf);
+
+            SPIDRV_AbortTransfer(SPI_HANDLE);
+            rsiError = RSI_ERROR_SPI_TIMEOUT;
+        }
+    }
+    else
+    {
+        WFX_RSI_LOG("SPI transfert failed with err:%x (tx%x rx%x)", spiError, (uint32_t) tx_buf, (uint32_t) rx_buf);
+        rsiError               = RSI_ERROR_SPI_FAIL;
+        spiInitiatorTaskHandle = NULL; // SPI operation failed. No notification to received.
+    }
+
+    xSemaphoreGive(spiTransferLock);
+    return rsiError;
+}
+
+#if 0
 /*****************************************************************************
  *@fn static bool dma_complete_cb(unsigned int channel, unsigned int sequenceNo, void *userParam)
  *
@@ -367,4 +449,4 @@ sl_status_t si91x_host_spi_transfer(const void *tx_buf, void *rx_buf, uint16_t x
 
     return RSI_ERROR_NONE;
 }
-
+#endif

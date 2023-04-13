@@ -39,7 +39,7 @@ declare_args() {
   use_silabs_thread_lib = false
 
   # enable by default for thread/non-wifi-ncp builds
-  enable_openthread_cli = !(use_rs9116 || use_wf200 || use_SiWx917)
+  enable_openthread_cli = !(use_rs9116 || use_wf200 || use_SiWx917 || use_wifisdk)
   kvs_max_entries = 255
 
   # Use Silabs factory data provider example.
@@ -294,7 +294,7 @@ template("efr32_sdk") {
         ]
       }
 
-      if (use_wf200 || use_rs9116 || use_SiWx917) {
+      if (use_wf200 || use_rs9116 || use_SiWx917 || use_wifisdk) {
         import("${chip_root}/src/platform/silabs/efr32/wifi_args.gni")
 
         defines += [ "LWIP_NETIF_API=1" ]

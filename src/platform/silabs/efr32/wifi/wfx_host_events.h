@@ -353,7 +353,8 @@ void wfx_ipv6_notify(int got_ip);
 
 #ifdef RS911X_WIFI
 /* RSI for LWIP */
-void * wfx_rsi_alloc_pkt(void);
+//void * wfx_rsi_alloc_pkt(void);
+void * wfx_rsi_alloc_pkt(uint16_t data_length);
 void wfx_rsi_pkt_add_data(void * p, uint8_t * buf, uint16_t len, uint16_t off);
 int32_t wfx_rsi_send_data(void * p, uint16_t len);
 #endif /* RS911X_WIFI */

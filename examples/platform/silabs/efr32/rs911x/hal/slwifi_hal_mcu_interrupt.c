@@ -58,12 +58,13 @@ void rsi_gpio_irq_cb(uint8_t irqnum)
     WFX_RSI_LOG ("RSI: Got Int=%d", irqnum);
     if (irqnum != SL_WFX_HOST_PINOUT_SPI_IRQ)
         return;
-   GPIO_IntClear(1 << SL_WFX_HOST_PINOUT_SPI_IRQ);
-    si91x_host_set_event(NCP_HOST_BUS_RX_EVENT);
+
+   si91x_host_set_event(NCP_HOST_BUS_RX_EVENT);
+//   GPIO_IntClear(1 << SL_WFX_HOST_PINOUT_SPI_IRQ);
      WFX_RSI_LOG ("Got SPI intr, cb=%x", (uint32_t)call_back);
  //   GPIO_IntClear(0xAAAA);
-    if (call_back != NULL)
-        (*call_back)();
+  //  if (call_back != NULL)
+  //      (*call_back)();
 }
 /*===================================================*/
 /**

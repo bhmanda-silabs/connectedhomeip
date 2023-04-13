@@ -13,7 +13,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-
+#define WFX_RSI_LOG(...) efr32Log(__VA_ARGS__);
 // Macro to drive LDMA channel number
 #define RSI_LDMA_TRANSFER_CHANNEL_NUM 3
 
@@ -98,7 +98,7 @@ sl_status_t si91x_host_init(void)
     const osThreadAttr_t attr = {
 
       .name       = "si91x_bus",
-      .priority   = 54,//osPriorityRealtime,
+      .priority   = osPriorityRealtime,
       .stack_mem  = 0,
       .stack_size = 768,
       .cb_mem     = 0,
@@ -114,7 +114,7 @@ sl_status_t si91x_host_init(void)
       .name       = "si91x_event",
       .priority   = osPriorityNormal,
       .stack_mem  = 0,
-      .stack_size = 900,
+      .stack_size = 960,
       .cb_mem     = 0,
       .cb_size    = 0,
       .attr_bits  = 0u,
@@ -397,7 +397,9 @@ void si91x_host_disable_bus_interrupt(void)
 
 void gpio_interrupt(uint8_t interrupt_number)
 {
+  WFX_RSI_LOG("Got gpio_interrupt");
   si91x_host_set_event(NCP_HOST_BUS_RX_EVENT);
+   WFX_RSI_LOG ("Got SPI intr ");
   //  GPIO_IntClear(0xAAAA);
 }
 

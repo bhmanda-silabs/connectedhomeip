@@ -54,6 +54,7 @@ extern "C" {
 #ifdef __cplusplus
 } // extern "C"
 #endif
+
 #ifdef WF200_WIFI
 #include "sl_wfx.h"
 #endif
@@ -415,7 +416,7 @@ static err_t low_level_output(struct netif * netif, struct pbuf * p)
     xSemaphoreGive(ethout_sem);
 
     return ERR_OK;
-    #endif
+#endif
 
 
 
@@ -426,7 +427,7 @@ static err_t low_level_output(struct netif * netif, struct pbuf * p)
   void * rsipkt;
   struct pbuf * q;
   uint16_t framelength;
-
+  SILABS_LOG("LWIP : low_level_output");
   if (xSemaphoreTake(ethout_sem, portMAX_DELAY) != pdTRUE)
   {
       return ERR_IF;
@@ -448,6 +449,8 @@ static err_t low_level_output(struct netif * netif, struct pbuf * p)
                                             SL_WIFI_ALLOCATE_COMMAND_BUFFER_WAIT_TIME);
     VERIFY_STATUS_AND_RETURN(status);
     if (packet == NULL) {
+      SILABS_LOG("EN-RSI:No buf");
+      xSemaphoreGive(ethout_sem);
       return SL_STATUS_ALLOCATION_FAILED;
     }
 //    if (!rsipkt)
@@ -456,7 +459,7 @@ static err_t low_level_output(struct netif * netif, struct pbuf * p)
 //        xSemaphoreGive(ethout_sem);
 //        return ERR_IF;
 //    }
-
+    memset(packet->desc, 0, sizeof(packet->desc));
 #ifdef WIFI_DEBUG_ENABLED
     uint8_t * b = (uint8_t *) p->payload;
     SILABS_LOG("EN-RSI: Out [%02x:%02x:%02x:%02x:%02x:%02x][%02x:%02x:%02x:%02x:%02x:%02x]type=%02x%02x", b[0], b[1], b[2], b[3],
@@ -477,14 +480,16 @@ static err_t low_level_output(struct netif * netif, struct pbuf * p)
     SILABS_LOG("EN-RSI: Sending %d", framelength);
 #endif
      // Fill frame type
-  packet->length  = p->len & 0xFFF;
-  packet->command =  0x1;
-     if (sl_si91x_driver_send_data_packet(SI91X_WLAN_CMD_QUEUE,buffer, 1000))
-      {
+    packet->length  = p->len & 0xFFF;
+    packet->command =  0x1;
+    SILABS_LOG("sl_si91x_driver_send_data_packet before");
+    if (sl_si91x_driver_send_data_packet(SI91X_WLAN_CMD_QUEUE,buffer, 1000))
+    {
         SILABS_LOG("*ERR*EN-RSI:Send fail");
         xSemaphoreGive(ethout_sem);
         return ERR_IF;
     }
+    SILABS_LOG("sl_si91x_driver_send_data_packet after");
     /* forward the generated packet to RSI to
      * send the data over wifi network
      */
@@ -504,7 +509,6 @@ static err_t low_level_output(struct netif * netif, struct pbuf * p)
 #endif
 }
 
-if 1
 sl_status_t si91x_host_process_data_frame(sl_wifi_interface_t interface, sl_wifi_buffer_t *buffer)
 {
   struct pbuf *pbuf_packet;
@@ -526,7 +530,6 @@ sl_status_t si91x_host_process_data_frame(sl_wifi_interface_t interface, sl_wifi
 
   return SL_STATUS_OK;
 }
-#endif
 
 /*****************************************************************************
  *  @fn  void wfx_host_received_sta_frame_cb(uint8_t *buf, int len)
