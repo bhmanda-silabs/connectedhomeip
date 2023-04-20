@@ -82,6 +82,13 @@ extern SPIDRV_Handle_t sl_spidrv_eusart_exp_handle;
 #error "Unknown platform"
 #endif
 
+
+static unsigned int tx_dma_channel;
+static unsigned int rx_dma_channel;
+
+static SemaphoreHandle_t spi_sem;
+
+static uint32_t dummy_data; /* Used for DMA - when results don't matter */
 StaticSemaphore_t xEfxSpiIntfSemaBuffer;
 static SemaphoreHandle_t spiTransferLock;
 static TaskHandle_t spiInitiatorTaskHandle = NULL;
@@ -113,6 +120,7 @@ void sl_wfx_host_gpio_init(void)
     GPIO_PinModeSet(WFX_INTERRUPT_PIN.port, WFX_INTERRUPT_PIN.pin, gpioModeInputPull, PINOUT_CLEAR);
     GPIO_ExtIntConfig(WFX_INTERRUPT_PIN.port, WFX_INTERRUPT_PIN.pin, SL_WFX_HOST_PINOUT_SPI_IRQ, true, false, true);
     GPIOINT_CallbackRegister(SL_WFX_HOST_PINOUT_SPI_IRQ, rsi_gpio_irq_cb);
+
     GPIO_IntDisable(1 << SL_WFX_HOST_PINOUT_SPI_IRQ); /* Will be enabled by RSI */
 
     // Change GPIO interrupt priority (FreeRTOS asserts unless this is done here!)
@@ -176,7 +184,7 @@ sl_status_t si91x_host_bus_init(void)
       WFX_RSI_LOG("%s:  ", __func__);
     return SL_STATUS_OK;
 }
-
+#if 1
 /*****************************************************************************
  *@brief
  *    Spi dma transfer is complete Callback
@@ -213,7 +221,9 @@ sl_status_t si91x_host_spi_transfer(const void *tx_buf, void *rx_buf, uint16_t x
 {
     if (xlen <= MIN_XLEN || (tx_buf == NULL && rx_buf == NULL)) // at least one buffer needs to be provided
     {
-        return RSI_ERROR_INVALID_PARAM;
+   //      return RSI_ERROR_INVALID_PARAM;
+           tx_buf = &dummy_data;
+           rx_buf = &dummy_data;
     }
 
    // (void) mode; // currently not used;
@@ -268,7 +278,7 @@ sl_status_t si91x_host_spi_transfer(const void *tx_buf, void *rx_buf, uint16_t x
     xSemaphoreGive(spiTransferLock);
     return rsiError;
 }
-
+#endif
 #if 0
 /*****************************************************************************
  *@fn static bool dma_complete_cb(unsigned int channel, unsigned int sequenceNo, void *userParam)
