@@ -182,6 +182,7 @@ template("efr32_sdk") {
   "${examples_plat_dir}/rs911x/hal",
   "${sl_wifi_sdk_root}/sl_wifi/inc",
   "${sl_wifi_sdk_root}/si91x/inc",
+      "${chip_root}/third_party/silabs/sl_net/resources/defaults/",
   "${sl_wifi_sdk_root}/si91x/memory",
   "${sl_wifi_sdk_root}/si91x/sl_net/inc",
   "${sl_wifi_sdk_root}/service/network_manager/inc",
@@ -276,7 +277,6 @@ template("efr32_sdk") {
           "RSI_SPI_INTERFACE",
           "RSI_WITH_OS",
           "SL_WIFI_ALLOCATE_COMMAND_BUFFER_WAIT_TIME",
-          "WIFI_DEBUG_ENABLED",
         ]
       }
       if (use_SiWx917) {

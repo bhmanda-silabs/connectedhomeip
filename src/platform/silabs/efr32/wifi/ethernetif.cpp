@@ -42,7 +42,7 @@ extern "C" {
 #include "sl_si91x_driver.h"
 #include "cmsis_os2.h"
 #include "sl_net.h"
-#include "sl_uart.h"
+//#include "sl_uart.h"
 #include "sl_board_configuration.h"
 #include "sl_wifi_types.h"
 #include "sl_si91x_types.h"
@@ -191,14 +191,14 @@ static void low_level_input(struct netif * netif, uint8_t * b, uint16_t len)
         if (netif->input(p, netif) != ERR_OK)
         {
             gOverrunCount++;
-            SILABS_LOG("overrun count entering when fail to alloc value %d", gOverrunCount);
+//            SILABS_LOG("overrun count entering when fail to alloc value %d", gOverrunCount);
             pbuf_free(p);
         }
     }
     else
     {
         gOverrunCount++;
-        SILABS_LOG("overrun count entering when fail to alloc value %d", gOverrunCount);
+//        SILABS_LOG("overrun count entering when fail to alloc value %d", gOverrunCount);
     }
 }
 

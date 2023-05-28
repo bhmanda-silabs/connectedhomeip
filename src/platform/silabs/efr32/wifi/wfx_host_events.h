@@ -97,7 +97,7 @@ typedef struct __attribute__((__packed__)) sl_wfx_mib_req_s
 #else /* End WF200 else RS911x */
 
 #include "wfx_msgs.h"
-
+#include "sl_si91x_driver.h"
 /* Wi-Fi events*/
 #define SL_WFX_STARTUP_IND_ID 1
 #define SL_WFX_CONNECT_IND_ID 2
@@ -354,9 +354,23 @@ void wfx_ipv6_notify(int got_ip);
 #ifdef RS911X_WIFI
 /* RSI for LWIP */
 //void * wfx_rsi_alloc_pkt(void);
+#ifdef __cplusplus
+extern "C" {
+#endif
+void *si91x_host_get_buffer_data(sl_wifi_buffer_t *buffer, uint16_t offset, uint16_t *data_length);
+#ifdef __cplusplus
+} // extern "C"
+#endif
 void * wfx_rsi_alloc_pkt(uint16_t data_length);
 void wfx_rsi_pkt_add_data(void * p, uint8_t * buf, uint16_t len, uint16_t off);
 int32_t wfx_rsi_send_data(void * p, uint16_t len);
+sl_status_t sl_si91x_driver_send_data_packet(si91x_queue_type_t queue_type,
+                                             sl_wifi_buffer_t *buffer,
+                                             uint32_t wait_time);
+sl_status_t sl_si91x_allocate_command_buffer(sl_wifi_buffer_t **host_buffer,
+                                             void **buffer,
+                                             uint32_t requested_buffer_size,
+                                             uint32_t wait_duration_ms);
 #endif /* RS911X_WIFI */
 
 #ifdef WF200_WIFI

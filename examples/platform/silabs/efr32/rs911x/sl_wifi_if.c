@@ -50,7 +50,7 @@
 */
 #include "cmsis_os2.h"
 #include "sl_net.h"
-#include "sl_uart.h"
+//#include "sl_uart.h"
 #include "sl_board_configuration.h"
 #include "sl_wifi_types.h"
 #include "sl_wifi_callback_framework.h"
