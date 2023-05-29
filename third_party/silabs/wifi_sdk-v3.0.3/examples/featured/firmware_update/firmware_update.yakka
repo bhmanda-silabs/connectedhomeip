@@ -1,0 +1,19 @@
+name: Firmware Upgradation App
+
+sources:
+  - main.c
+  - app.c
+
+clang-format: true
+
+requires:
+  components:
+    - wifi
+    - network_manager
+    - freertos
+    - clang-format
+
+flags:
+  c:
+    global:
+      - -Werror

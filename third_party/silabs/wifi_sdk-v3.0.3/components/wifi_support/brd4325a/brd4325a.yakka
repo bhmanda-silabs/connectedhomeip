@@ -1,0 +1,37 @@
+name: BRD4325A
+  
+includes:
+  global:
+    - .
+    - config
+
+requires:
+  components:
+    - siwx917_soc
+  features:
+    - wifi_internal_bus
+
+supports:
+  components:
+    wifi:
+      requires:
+        components:
+          - si91x
+
+flags:
+  ld:
+    global:
+      - -Wl,--defsym=SI91X_SOC_ROM_START_ADDRESS=0x8212000
+      - -Wl,--defsym=SI91X_SOC_RAM_START_ADDRESS=0xc
+
+clang-format: true
+
+slc:
+  label: 'BRD4325A'
+  description: 'Board support for BRD4325A.'
+  category: 'Platform|Board|Radio Board'
+  tag:
+    - board:pn:BRD4325
+    - board:variant:A
+  requires:
+    - name: siwx917_soc

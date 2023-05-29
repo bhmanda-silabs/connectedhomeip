@@ -1,0 +1,23 @@
+name: ICMP
+
+sources:
+  - sl_net_ping.c
+
+clang-fomat: true
+
+suds:
+  sl-service-ping-reference:
+    version: "0.1"
+    authors:
+      - aji.gerdiman@silabs.com
+      - nik.vonhuben@silabs.com
+    contentType: doxygen
+    title: "Ping"
+    description: "Ping"
+
+doxygen:
+  project_name: "Ping APIs"
+  inputs:
+    - sl_net_ping.h
+    - docs/doxygen_ping_indexfile.md
+    - docs/doxygen_ping_template.h

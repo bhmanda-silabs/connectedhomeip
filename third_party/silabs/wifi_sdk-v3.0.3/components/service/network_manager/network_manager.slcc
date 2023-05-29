@@ -1,0 +1,16 @@
+id: network_manager
+package: wiseconnect3_sdk
+description: >
+  Network management API
+label: Network Manager
+category: Networking|Core
+quality: production
+provides:
+- name: network_manager
+source:
+- path: ./components/service/network_manager/src/sl_net_basic_certificate_store.c
+- path: ./components/service/network_manager/src/sl_net.c
+include:
+- path: ./components/service/network_manager/inc
+define:
+- name: SL_NET_COMPONENT_INCLUDED

@@ -1,0 +1,15 @@
+id: sl_tls
+package: wiseconnect3_sdk
+description: >
+  TLS Store Management API
+label: SL TLS
+category: Networking|Core
+quality: production
+provides:
+- name: sl_tls
+source:
+- path: ./components/sl_tls/src/sl_tls.c
+include:
+- path: ./components/sl_tls/inc
+define:
+- name: SL_TLS_COMPONENT_INCLUDED

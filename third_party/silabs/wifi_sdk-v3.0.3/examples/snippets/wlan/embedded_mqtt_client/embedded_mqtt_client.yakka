@@ -1,0 +1,25 @@
+name: Embedded MQTT client
+
+includes:
+  global:
+    - .
+
+sources:
+  - main.c
+  - app.c
+
+clang-format: true
+
+requires:
+  components:
+    - wifi
+    - network_manager
+    - sl_tls
+    - mqtt
+    - freertos
+    - clang-format
+
+flags:
+  c:
+    global:
+      - -Werror

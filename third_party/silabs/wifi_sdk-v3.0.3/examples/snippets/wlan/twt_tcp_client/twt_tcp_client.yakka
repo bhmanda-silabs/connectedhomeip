@@ -1,0 +1,34 @@
+name: Twt Tcp Client
+
+sources:
+  - main.c
+  - app.c
+
+includes:
+  global:
+    - .
+
+flags:
+  c:
+    global:
+      - -Werror
+
+clang-format: true
+
+defines:
+  global:
+    - HIGH_EFFICIENCY_PARAMS_SUPPORT
+    - TWT_SUPPORT
+
+requires:
+  features:
+    - wifi
+    - ipv6
+  components:
+    - wifi
+    - si91x
+    - network_manager
+    - freertos
+    - iot_socket
+    - bsd_socket
+    - clang-format

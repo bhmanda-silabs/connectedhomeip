@@ -1,0 +1,82 @@
+id: siwx917_soc
+package: wiseconnect3_sdk
+description: >
+  SoC support for Si91x
+label: Si91x SoC
+category: Devices|Si91x
+quality: production
+provides:
+- name: siwx917_soc
+- name: cortexm4
+- name: armv7em
+- name: device_arm
+- name: device
+source:
+- path: ./components/siwx917_soc/sl_platform.c
+- path: ./components/siwx917_soc/sl_uart.c
+- path: ./components/siwx917_soc/sli_siwx917_soc.c
+- path: ./components/siwx917_soc/sl_si91x_timer.c
+- path: ./components/siwx917_soc/startup_RS1xxxx.c
+- path: ./components/siwx917_soc/rsi_wisemcu_hardware_setup.c
+- path: ./components/siwx917_soc/drivers/systemlevel/src/rsi_pll.c
+- path: ./components/siwx917_soc/drivers/systemlevel/src/rsi_ulpss_clk.c
+- path: ./components/siwx917_soc/drivers/systemlevel/src/rsi_ipmu.c
+- path: ./components/siwx917_soc/drivers/systemlevel/src/rsi_power_save.c
+- path: ./components/siwx917_soc/drivers/systemlevel/src/rsi_temp_sensor.c
+- path: ./components/siwx917_soc/drivers/ipmu/ipmu_apis.c
+- path: ./components/siwx917_soc/drivers/cmsis_driver/USART.c
+- path: ./components/siwx917_soc/drivers/cmsis_driver/UDMA.c
+- path: ./components/siwx917_soc/drivers/ipmu/rsi_system_config_9117.c
+- path: ./components/siwx917_soc/drivers/peripheral_drivers/src/clock_update.c
+- path: ./components/siwx917_soc/drivers/peripheral_drivers/src/rsi_usart.c
+- path: ./components/siwx917_soc/drivers/peripheral_drivers/src/rsi_udma_wrapper.c
+- path: ./components/siwx917_soc/drivers/peripheral_drivers/src/rsi_egpio.c
+- path: ./components/siwx917_soc/drivers/peripheral_drivers/src/rsi_udma.c
+- path: ./components/siwx917_soc/rsi_hal_mcu_m4_rom.c
+- path: ./components/siwx917_soc/rsi_deepsleep_commonflash.c
+include:
+- path: ./components/siwx917_soc/inc
+- path: ./components/siwx917_soc/drivers/cmsis_driver
+- path: ./components/siwx917_soc/drivers/cmsis_driver/config
+- path: ./components/siwx917_soc/drivers/cmsis_driver/CMSIS/Driver/Include
+- path: ./components/siwx917_soc/drivers/systemlevel/inc
+- path: ./components/siwx917_soc/drivers/peripheral_drivers/inc
+- path: ./components/siwx917_soc/drivers/rom_driver/inc
+define:
+- name: RSI_M4_INTERFACE
+- name: ENABLE_IPMU_APIS
+- name: ROM_BYPASS
+- name: SI917
+- name: DEBUG_UART
+- name: FLASH_BASED_EXECUTION_ENABLE
+- name: TA_DEEP_SLEEP_COMMON_FLASH
+- name: COMMON_FLASH_EN
+  condition: [brd4325a]
+- name: RSI_WITH_OS
+  condition: [freertos]
+requires:
+- {"name":"wiseconnect_toolchain_gcc"}
+
+template_contribution:
+- {"name":"device_opn","value":"si917-sb00"}
+- {"name":"device_arch","value":"armv7em"}
+- {"name":"device_cpu","value":"cortexm4"}
+- {"name":"device_family","value":"SI917"}
+- {"condition":["brd4325a"],"name":"device_flash_addr","value":136388608}
+- {"condition":["brd4325b"],"name":"device_flash_addr","value":134291456}
+- {"condition":["brd4325a"],"name":"ram_execution_enable","value":true}
+- {"name":"device_flash_size","value":450560}
+- {"name":"device_flash_page_size","value":256}
+- {"name":"device_ram_addr","value":1024}
+- {"name":"device_ram_size","value":194560}
+- {"name":"device_fpu","value":true}
+- {"name":"device_mpu","value":true}
+- {"name":"default_stack_size","value":3072}
+- {"name":"default_heap_size","value":71688}
+
+toolchain_settings:
+- {"option":"device_opn","value":"si917-sb00"}
+- {"option":"architecture","value":"armv7e-m"}
+- {"option":"cpu","value":"cortex-m4"}
+- {"option":"fpu","value":"fpv4-sp"}
+

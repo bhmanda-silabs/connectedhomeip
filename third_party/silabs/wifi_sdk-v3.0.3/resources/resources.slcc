@@ -1,0 +1,17 @@
+id: wifi_resources
+package: wiseconnect3_sdk
+description: >
+  Wi-Fi SDK default values and certificates
+label: Wi-Fi resources
+category: Resources
+quality: production
+provides:
+- name: wifi_resources
+include:
+- path: ./resources/certificates
+- path: ./resources/defaults
+- path: ./resources/other
+config_file:
+- path: ./resources/defaults/sl_net_default_values.h
+  file_id: sl_net_default_values
+

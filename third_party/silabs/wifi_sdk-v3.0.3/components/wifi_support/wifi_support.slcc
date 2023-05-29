@@ -1,0 +1,41 @@
+id: wifi_support
+package: wiseconnect3_sdk
+description: >
+  SL Wi-Fi Support Library
+label: Wi-Fi Support Library
+category: Wi-Fi
+quality: production
+provides:
+- name: wifi_support
+source:
+- path: ./components/wifi_support/src/sl_utility.c
+- path: ./components/wifi_support/siwx917_soc/sl_system_init.c
+  condition: [siwx917_soc]
+- path: ./components/wifi_support/siwx917_soc/sl_system_kernel.c
+  condition: [siwx917_soc]
+include:
+- path: ./components/wifi_support/inc
+- path: ./components/wifi_support/brd4180a
+  condition: [brd4180a]
+- path: ./components/wifi_support/efr32mg21
+  condition: [brd4180a]
+- path: ./components/wifi_support/brd4180b
+  condition: [brd4180b]
+- path: ./components/wifi_support/efr32mg21
+  condition: [brd4180b]
+- path: ./components/wifi_support/brd4325a
+  condition: [brd4325a]
+- path: ./components/wifi_support/brd4325b
+  condition: [brd4325b]
+- path: ./components/wifi_support/efm32gg11b
+  condition: [efm32gg11b]
+- path: ./components/wifi_support/efr32mg21
+  condition: [efr32mg21]
+- path: ./components/wifi_support/siwx917_soc
+  condition: [siwx917_soc]
+define:
+- name: SL_COMPONENT_CATALOG_PRESENT
+- name: EFR32MG21A020F1024IM32
+  condition: [brd4180a]
+- name: EFR32MG21A020F1024IM32
+  condition: [brd4180b]

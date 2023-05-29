@@ -1,0 +1,11 @@
+id: si91x_basic_buffers
+package: wiseconnect3_sdk
+description: >
+  Si91x malloc based buffer system
+label: Basic buffers
+category: Devices|Si91x|Memory
+quality: production
+provides:
+- name: si91x_basic_buffers
+source:
+- path: ./components/si91x/memory/malloc_buffers.c

@@ -1,0 +1,24 @@
+name: TLS Client
+
+sources:
+  - main.c
+  - app.c
+
+includes:
+  global:
+    - .
+
+clang-format: true
+
+requires:
+  components:
+    - wifi
+    - network_manager
+    - sl_tls
+    - freertos
+    - clang-format
+    
+flags:
+  c:
+    global:
+      - -Werror

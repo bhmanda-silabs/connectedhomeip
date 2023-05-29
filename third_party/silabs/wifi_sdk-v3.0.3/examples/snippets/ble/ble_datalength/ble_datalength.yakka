@@ -1,0 +1,34 @@
+name: SL BLE Data Length Example
+
+sources:
+  - app.c
+  - main.c
+  
+includes:
+  files:
+    - app.h
+    - ble_config.h
+  global:
+    - .
+    
+defines:
+  global:
+    - RSI_DEBUG_PRINTS
+    
+requires:
+  components:
+    - wifi_support
+    - sl_device
+    - si91x
+    - wifi
+    - network_manager
+    - freertos
+    - clang-format
+    - ble
+
+clang-format: true
+
+flags:
+  c:
+    global:
+      - -Werror

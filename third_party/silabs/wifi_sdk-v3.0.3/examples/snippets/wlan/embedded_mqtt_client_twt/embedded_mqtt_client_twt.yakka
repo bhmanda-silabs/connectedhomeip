@@ -1,0 +1,32 @@
+name: Embedded MQTT client TWT
+
+includes:
+  global:
+    - .
+
+sources:
+  - main.c
+  - app.c
+
+defines:
+  global:
+    - HIGH_EFFICIENCY_PARAMS_SUPPORT
+    - TWT_SUPPORT
+
+
+clang-format: true
+
+requires:
+  components:
+    - wifi
+    - network_manager
+    - sl_tls
+    - mqtt
+    - freertos
+    - clang-format
+
+flags:
+  c:
+    global:
+      - -Wall
+      - -Werror

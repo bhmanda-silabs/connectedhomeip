@@ -1,0 +1,11 @@
+id: bsd_socket
+package: wiseconnect3_sdk
+description: >
+  BSD Sockets
+label: BSD Sockets
+category: Networking|Sockets
+quality: production
+provides:
+- name: bsd_socket
+include:
+- path: ./components/si91x/bsd_socket/inc

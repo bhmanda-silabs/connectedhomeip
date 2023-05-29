@@ -1,0 +1,12 @@
+id: basic_network_manager
+package: wiseconnect3_sdk
+description: >
+  Basic network data manager
+label: Basic Data Manager
+category: Networking|Data Management
+quality: production
+provides:
+- name: basic_network_manager
+source:
+- path: ./components/service/network_manager/src/sl_net_basic_credentials.c
+- path: ./components/service/network_manager/src/sl_net_basic_profiles.c

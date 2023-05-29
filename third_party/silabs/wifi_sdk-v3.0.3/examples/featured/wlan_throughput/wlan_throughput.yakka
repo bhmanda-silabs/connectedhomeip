@@ -1,0 +1,21 @@
+name: Wlan Throughput
+
+sources:
+  - main.c
+  - app.c
+
+clang-format: true
+
+requires:
+  components:
+    - wifi
+    - network_manager
+    - sl_tls
+    - freertos
+    - clang-format
+    - resources
+
+flags:
+  ld:
+    global:
+      - -u _printf_float

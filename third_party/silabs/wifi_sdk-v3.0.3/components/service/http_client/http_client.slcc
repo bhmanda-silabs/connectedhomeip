@@ -1,0 +1,14 @@
+id: http_client
+package: wiseconnect3_sdk
+description: >
+  
+category: 
+quality: production
+provides:
+- name: http_client
+source:
+- path: ./components/service/http_client/si91x/sl_http_client.c
+include:
+- path: ./components/service/http_client/inc
+define:
+- name: HTTP_CLIENT_FEATURE

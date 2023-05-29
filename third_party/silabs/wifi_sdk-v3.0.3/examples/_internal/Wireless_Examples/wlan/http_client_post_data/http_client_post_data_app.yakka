@@ -1,0 +1,16 @@
+name: HTTP client post data application
+
+sources:
+  - main.c
+  - app.c
+
+clang-format: true
+
+requires:
+  components:
+    - wifi
+    - network_manager
+    - sl_tls
+    - freertos
+    - http_client
+    - clang-format

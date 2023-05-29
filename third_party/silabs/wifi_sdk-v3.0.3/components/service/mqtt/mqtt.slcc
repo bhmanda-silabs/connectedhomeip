@@ -1,0 +1,14 @@
+id: mqtt
+package: wiseconnect3_sdk
+description: >
+  
+category: 
+quality: production
+provides:
+- name: mqtt
+source:
+- path: ./components/service/mqtt/si91x/sl_mqtt_client.c
+include:
+- path: ./components/service/mqtt/inc
+define:
+- name: MQTT_CLIENT_FEATURE

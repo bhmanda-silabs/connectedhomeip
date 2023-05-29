@@ -1,0 +1,28 @@
+id: wiseconnect3_sdk
+label: WiSeConnect 3 SDK
+description: >
+  WiSeConnect 3 extension for the Gecko SDK
+version: "3.0.3"
+sdk:
+  id: gecko_sdk
+  version: "4.1.3"
+component_path:
+  - path: resources
+  - path: components/freertos/component
+  - path: components/si91x
+  - path: components/si91x/ble
+  - path: components/si91x/bsd_socket
+  - path: components/service/network_manager
+  - path: components/service/http_client
+  - path: components/service/mqtt
+  - path: components/service/sntp
+  - path: components/protocol/wifi
+  - path: components/wifi_support
+  - path: components/wifi_support/brd4325a
+  - path: components/wifi_support/brd4325b
+  - path: components/siwx917_soc
+  - path: components/siwx917_soc/toolchain/component
+  - path: components/sl_tls
+  - path: third_party/aws_sdk
+
+  

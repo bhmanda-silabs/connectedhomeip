@@ -1,0 +1,16 @@
+name: Enterprise Client
+
+sources:
+  - app.c
+  - main.c
+
+clang-format: true
+
+requires:
+  components:
+    - wifi
+    - network_manager
+    - freertos
+    - sl_tls
+    - clang-format
+

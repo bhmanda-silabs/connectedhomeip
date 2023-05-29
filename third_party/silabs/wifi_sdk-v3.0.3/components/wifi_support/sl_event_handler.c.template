@@ -1,0 +1,50 @@
+#include "sl_event_handler.h"
+#include "sl_component_catalog.h"
+#ifdef SL_CATALOG_KERNEL_PRESENT
+#include "cmsis_os2.h"
+#endif
+#include "sl_board_configuration.h"
+#include "sl_board_control.h"
+#include "sl_uart.h"
+
+void sl_driver_init(void)
+{
+}
+
+void sl_service_init(void)
+{
+  sl_board_enable_vcom();
+  sl_uart_init(DEFAULT_UART, 115200, DEFAULT_UART_PIN_CONFIG);
+}
+
+void sl_stack_init(void)
+{
+}
+
+void sl_internal_app_init(void)
+{
+}
+
+
+void sl_platform_process_action(void)
+{
+}
+
+void sl_service_process_action(void)
+{
+}
+
+void sl_stack_process_action(void)
+{
+}
+
+void sl_internal_app_process_action(void)
+{
+}
+
+#ifdef SL_CATALOG_KERNEL_PRESENT
+void sl_kernel_start(void)
+{
+  osKernelStart();
+}
+#endif

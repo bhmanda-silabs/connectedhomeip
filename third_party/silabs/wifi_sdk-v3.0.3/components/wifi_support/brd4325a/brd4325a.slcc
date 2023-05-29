@@ -1,0 +1,19 @@
+id: brd4325a
+package: wiseconnect3_sdk
+description: >
+  Board support for BRD4325A.
+label: BRD4325A
+category: Platform|Board|Radio Board
+quality: production
+provides:
+- name: brd4325a
+include:
+- path: ./components/wifi_support/brd4325a/.
+- path: ./components/wifi_support/brd4325a/config
+requires:
+- {"name":"siwx917_soc"}
+
+tag:
+- board:pn:BRD4325
+- board:variant:A
+

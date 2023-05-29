@@ -1,0 +1,14 @@
+name: Power save standby associated
+
+sources:
+  - main.c
+  - app.c
+
+clang-format: true
+
+requires:
+  components:
+    - wifi
+    - network_manager
+    - freertos
+    - clang-format

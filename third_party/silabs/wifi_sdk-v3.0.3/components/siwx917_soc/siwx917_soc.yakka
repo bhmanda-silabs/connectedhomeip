@@ -1,0 +1,154 @@
+name: SL API for SiWx917 SoC
+  
+includes:
+  global:
+    - inc
+    - drivers/cmsis_driver
+    - drivers/cmsis_driver/config
+    - drivers/cmsis_driver/CMSIS/Driver/Include
+    - drivers/systemlevel/inc
+    - drivers/peripheral_drivers/inc
+    - drivers/rom_driver/inc
+    
+sources:
+  - sl_platform.c
+  - sl_uart.c
+  - sli_siwx917_soc.c
+  - sl_si91x_timer.c
+  - startup_RS1xxxx.c
+  - rsi_wisemcu_hardware_setup.c
+  - drivers/systemlevel/src/rsi_pll.c
+  - drivers/systemlevel/src/rsi_ulpss_clk.c
+  - drivers/systemlevel/src/rsi_ipmu.c
+  - drivers/systemlevel/src/rsi_power_save.c
+  - drivers/systemlevel/src/rsi_temp_sensor.c
+  - drivers/ipmu/ipmu_apis.c
+  - drivers/cmsis_driver/USART.c
+  - drivers/cmsis_driver/UDMA.c
+  - drivers/ipmu/rsi_system_config_9117.c
+  - drivers/peripheral_drivers/src/clock_update.c
+  - drivers/peripheral_drivers/src/rsi_usart.c
+  - drivers/peripheral_drivers/src/rsi_udma_wrapper.c
+  - drivers/peripheral_drivers/src/rsi_egpio.c
+  - drivers/peripheral_drivers/src/rsi_udma.c
+  - rsi_hal_mcu_m4_rom.c
+  - rsi_deepsleep_commonflash.c
+#  - rsi_hal_mcu_timer.c
+
+defines:
+  global:
+    - RSI_M4_INTERFACE
+    - ENABLE_IPMU_APIS
+    - ROM_BYPASS
+    - SI917
+    - DEBUG_UART
+    - FLASH_BASED_EXECUTION_ENABLE
+    - TA_DEEP_SLEEP_COMMON_FLASH
+
+provides:
+  - silicon_labs_siwx917_soc
+  
+supports:
+  components:
+    freertos:
+      defines:
+        global:
+          - RSI_WITH_OS
+    brd4325a:
+      defines:
+        global:
+          - COMMON_FLASH_EN
+                    
+  features:
+    ram_execution:
+      defines:
+        global:
+          - EXECUTION_FROM_RAM
+
+
+requires:
+  components:
+    - cortex_m4
+    - commander
+  features:
+    - silicon_labs_siwx917_soc
+    - wifi_internal_bus
+
+blueprints:
+  flash_rps:
+    depends:
+      - bin_to_rps
+    process:
+      - commander: 'rps load {{project_output}}/{{project_name}}.rps'
+  link:
+    depends:
+      - bin_to_rps
+  bin_to_rps:
+    depends:
+      - '{{project_output}}/{{project_name}}.elf'
+      - '{{project_output}}/{{project_name}}.hex'
+      - '{{project_output}}/{{project_name}}.bin'
+    process:
+      - commander: 'rps create {{project_output}}/{{project_name}}.rps --app {{project_output}}/{{project_name}}.hex'
+
+linker_script: linkerfile_SoC.ld
+
+clang-format: true
+
+slc:
+  label: 'Si91x SoC'
+  description: 'SoC support for Si91x'
+  category: 'Devices|Si91x'
+  provides:
+    - cortexm4
+    - armv7em
+    - device_arm
+    - device
+  requires:
+    - name: wiseconnect_toolchain_gcc
+  template_contribution:
+    - name: device_opn
+      value: si917-sb00
+    - name: device_arch
+      value: armv7em
+    - name: device_cpu
+      value: cortexm4
+    - name: device_family
+      value: SI917
+    - name: device_flash_addr
+      value: 136388608
+      condition:
+      - brd4325a
+    - name: device_flash_addr
+      value: 134291456
+      condition: 
+      - brd4325b
+    - name: ram_execution_enable
+      value: true
+      condition:
+      - brd4325a
+    - name: device_flash_size
+      value: 450560
+    - name: device_flash_page_size
+      value: 256
+    - name: device_ram_addr
+      value: 1024
+    - name: device_ram_size
+      value: 194560
+    - name: device_fpu
+      value: true
+    - name: device_mpu
+      value: true
+    - name: default_stack_size
+      value: 3072
+    - name: default_heap_size
+      value: 71688
+  toolchain_settings:
+    - option: device_opn
+      value: si917-sb00
+    - option: architecture
+      value: armv7e-m
+    - option: cpu
+      value: cortex-m4
+    - option: fpu
+      value: fpv4-sp
