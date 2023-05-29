@@ -40,7 +40,7 @@ extern "C" {
 #include "wfx_host_events.h"
 #include "wfx_rsi.h"
 #include "wfx_sl_ble_init.h"
-#include <rsi_driver.h>
+//#include <rsi_driver.h>
 #include <rsi_utils.h>
 #include <stdbool.h>
 #ifdef __cplusplus
@@ -63,8 +63,11 @@ extern rsi_ble_event_conn_status_t conn_event_to_app;
 extern sl_wfx_msg_t event_msg;
 
 StaticTask_t rsiBLETaskStruct;
-rsi_semaphore_handle_t sl_rs_ble_init_sem;
-rsi_semaphore_handle_t sl_ble_event_sem;
+//rsi_semaphore_handle_t sl_rs_ble_init_sem;
+//rsi_semaphore_handle_t sl_ble_event_sem;
+
+osSemaphoreId_t sl_ble_event_sem; //Matter
+osSemaphoreId_t sl_rs_ble_init_sem; //Matter
 
 /* wfxRsi Task will use as its stack */
 StackType_t wfxBLETaskStack[WFX_RSI_TASK_SZ] = { 0 };
@@ -106,15 +109,15 @@ void sl_ble_event_handling_task(void)
     WFX_RSI_LOG("%s starting", __func__);
 
     //! This semaphore is waiting for wifi module initialization.
-    rsi_semaphore_wait(&sl_rs_ble_init_sem, 0);
-
+   // rsi_semaphore_wait(&sl_rs_ble_init_sem, 0);
+     osSemaphoreAcquire(sl_rs_ble_init_sem, osWaitForever); //Matter
     sl_ble_init();
 
     // Application event map
     while (1)
     {
-        //! This semaphore is waiting for next ble event task
-        rsi_semaphore_wait(&sl_ble_event_sem, 0);
+    //! This semaphore is waiting for next ble event task
+        osSemaphoreAcquire(sl_ble_event_sem, osWaitForever);
 
         // checking for events list
         event_id = rsi_ble_app_get_event();
@@ -234,8 +237,8 @@ BLEManagerImpl BLEManagerImpl::sInstance;
 CHIP_ERROR BLEManagerImpl::_Init()
 {
     CHIP_ERROR err;
-    rsi_semaphore_create(&sl_rs_ble_init_sem, 0);
-    rsi_semaphore_create(&sl_ble_event_sem, 0);
+    sl_rs_ble_init_sem = osSemaphoreNew(1, 0, NULL); //Matter
+    sl_ble_event_sem = osSemaphoreNew(1, 0, NULL); //Matter
     ChipLogProgress(DeviceLayer, "%s Start ", __func__);
 
     wfx_rsi.ble_task = xTaskCreateStatic((TaskFunction_t) sl_ble_event_handling_task, "rsi_ble", WFX_RSI_TASK_SZ, NULL, 1,

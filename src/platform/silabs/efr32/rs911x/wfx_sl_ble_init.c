@@ -30,13 +30,15 @@
 =================================================================================*/
 
 #include "wfx_sl_ble_init.h"
-#include "rsi_ble_config.h"
+//#include "rsi_ble_config.h"
+#include "ble_config.h"
+
 
 // application defines
 rsi_ble_event_conn_status_t conn_event_to_app;
 rsi_ble_t att_list;
 sl_wfx_msg_t event_msg;
-extern rsi_semaphore_handle_t sl_ble_event_sem;
+extern osSemaphoreId_t sl_ble_event_sem;
 
 // Memory to initialize driver
 uint8_t bt_global_buf[BT_GLOBAL_BUFF_LEN];
@@ -202,7 +204,7 @@ void rsi_ble_app_set_event(uint32_t event_num)
 {
     WFX_RSI_LOG("%s: starting", __func__);
     event_msg.ble_app_event_map |= BIT(event_num);
-    rsi_semaphore_post(&sl_ble_event_sem);
+     osSemaphoreRelease(sl_ble_event_sem);
     return;
 }
 

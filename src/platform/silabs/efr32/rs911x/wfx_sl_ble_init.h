@@ -29,7 +29,8 @@
 // BLE include file to refer BLE APIs
 #include "FreeRTOS.h"
 #include "event_groups.h"
-#include "rsi_ble_config.h"
+//#include "rsi_ble_config.h"
+#include "ble_config.h"
 #include "task.h"
 #include "timers.h"
 #include "wfx_host_events.h"
@@ -38,14 +39,16 @@
 #include <rsi_ble_apis.h>
 #include <rsi_ble_common_config.h>
 #include <rsi_ble_config.h>
-#include <rsi_bootup_config.h>
+//#include <rsi_bootup_config.h>
 #include <rsi_bt_common.h>
 #include <rsi_bt_common_apis.h>
 #include <rsi_common_apis.h>
+/*
 #include <rsi_driver.h>
 #include <rsi_wlan_apis.h>
 #include <rsi_wlan_config.h>
 #include <rsi_wlan_non_rom.h>
+*/
 #include <stdbool.h>
 #include <string.h>
 
