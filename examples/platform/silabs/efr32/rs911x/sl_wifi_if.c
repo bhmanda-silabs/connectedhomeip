@@ -532,7 +532,7 @@ static int32_t wfx_rsi_init(void)
   wfx_rsi.events = xEventGroupCreateStatic(&rsiDriverEventGroup);
   
     wfx_rsi.dev_state |= WFX_RSI_ST_DEV_READY;
-#if (RSI_BLE_ENABLE)
+#if (BLE_ENABLE)
      osSemaphoreRelease(sl_rs_ble_init_sem);
 #endif	
     WFX_RSI_LOG("%s: RSI: OK", __func__);
