@@ -510,6 +510,7 @@ static void wfx_rsi_do_join(void)
         {
             if (is_wifi_disconnection_event || wfx_rsi.join_retries <= WFX_RSI_CONFIG_MAX_JOIN)
             {
+                SILABS_LOG("join Failed, Error Code : 0x%lX", status);
                 SILABS_LOG("%s: failed. retry: %d", __func__, wfx_rsi.join_retries);
                 SILABS_LOG("%s: starting JOIN to %s after %d tries\n", __func__, (char *) &wfx_rsi.sec.ssid[0],
                            wfx_rsi.join_retries);

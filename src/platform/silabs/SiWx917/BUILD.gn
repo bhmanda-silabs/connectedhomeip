@@ -22,6 +22,7 @@ import("${chip_root}/third_party/silabs/silabs_board.gni")
 
 silabs_platform_dir = "${chip_root}/src/platform/silabs"
 
+chip_enable_ota_requestor = true
 assert(chip_device_platform == "SiWx917")
 if (chip_crypto == "platform") {
   import("//build_overrides/mbedtls.gni")
@@ -69,8 +70,8 @@ static_library("SiWx917") {
   # TODO: OTA on CCP platform
   if (chip_enable_ota_requestor) {
     sources += [
-      #"OTAImageProcessorImpl.cpp",
-      #"${silabs_platform_dir}/OTAImageProcessorImpl.h",
+      "OTAImageProcessorImpl.cpp",
+      "${silabs_platform_dir}/OTAImageProcessorImpl.h",
     ]
   }
 
