@@ -40,7 +40,7 @@ SECTIONS
 	{
 		KEEP(*(.isr_vector))
      	KEEP(*(.reset_handler))
-		*(EXCLUDE_FILE(*sl_si91x_bus.o *sl_si91x_driver.o *sli_si91x_multithreaded.o *rsi_hal_mcu_m4_ram.o ) .text*)
+		*(EXCLUDE_FILE(*sl_si91x_bus.o *sl_si91x_driver.o *sli_si91x_multithreaded.o *rsi_hal_mcu_m4_ram.o *croutine.o *event_groups.o *list.o *queue.o *stream_buffer.o *tasks.o *timers.o *cmsis_os2.o *freertos_umm_malloc_host.o *port.o *heap_*.o) .text*)
 		
     /* .ctors */
     *crtbegin.o(.ctors)
@@ -120,17 +120,30 @@ SECTIONS
   {
     . = ALIGN(4);
     __data_start__ = .;
-        _sdata = __data_start__;
-        KEEP(*(.ramVector))	
+		/* _sdata is used in coide startup code */
+		_sdata = __data_start__;
+		KEEP(*(.ramVector))
 		KEEP(*(.init))
 		KEEP(*(.fini))
 		*(.rodata*)
 		*(vtable)
 		*(.data*)
-		*sl_si91x_bus.o(.text*)
-		*sl_si91x_driver.o(.text*)
-		*sli_si91x_multithreaded.o(.text*)
 		*rsi_hal_mcu_m4_ram.o(.text*)
+		*sl_si91x_driver.o(.text*)
+		*sl_si91x_bus.o(.text*)
+		*sli_si91x_multithreaded.o(.text*)
+		*rsi_deepsleep_soc.o(.text*)
+		*croutine.o(.text*)
+		*event_groups.o(.text*)
+		*list.o(.text*)
+		*queue.o(.text*)
+		*cmsis_os2.o(.text*)
+		*stream_buffer.o(.text*)
+		*tasks.o(.text*)
+		*timers.o(.text*)
+		*freertos_umm_malloc_host.o(.text*)
+		*port.o(.text*)
+		*heap_*.o(.text*)
 
     . = ALIGN(4);
     /* preinit data */

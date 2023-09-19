@@ -17,7 +17,7 @@
  */
 
 #include "OTAConfig.h"
-
+#if 0
 #include "application_properties.h"
 #include <app/server/Server.h>
 
@@ -65,7 +65,7 @@ __attribute__((used)) ApplicationProperties_t sl_app_properties = {
     /// Pointer to Long Token Data Section
     .longTokenSectionAddress = NULL,
 };
-
+#endif
 // Global OTA objects
 chip::DefaultOTARequestor gRequestorCore;
 chip::DefaultOTARequestorStorage gRequestorStorage;

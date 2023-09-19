@@ -61,8 +61,12 @@ int main(void)
     xTaskCreate(application_start, "main_task", MAIN_TASK_STACK_SIZE, NULL, MAIN_TASK_PRIORITY, &main_Task);
 
     SILABS_LOG("Starting scheduler");
+    SILABS_LOG("Starting scheduler");
+    SILABS_LOG("Starting scheduler");
+    SILABS_LOG("Starting scheduler");
+    SILABS_LOG("Starting scheduler");
+    SILABS_LOG("Starting scheduler");
     GetPlatform().StartScheduler();
-
     // Should never get here.
     chip::Platform::MemoryShutdown();
     SILABS_LOG("vTaskStartScheduler() failed");

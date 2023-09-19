@@ -20,16 +20,27 @@
 #include <app/clusters/ota-requestor/OTARequestorInterface.h>
 #include <platform/silabs/OTAImageProcessorImpl.h>
 
-extern "C" {
-#include "btl_interface.h"
-#include "em_bus.h" // For CORE_CRITICAL_SECTION
-}
-
 #include <platform/silabs/SilabsConfig.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "sl_si91x_driver.h"
+#ifdef RSI_M4_INTERFACE
+#include "sl_si91x_hal_soc_soft_reset.h"
+#endif
+#ifdef __cplusplus
+}
+#endif
 
 /// No error, operation OK
 #define SL_BOOTLOADER_OK 0L
-
+#define SL_STATUS_FW_UPDATE_DONE ((sl_status_t)0x10003)
+uint8_t flag = 0;
+uint8_t last = 0;
+uint8_t length = 0;
+uint32_t total_size = 0;
+uint32_t count = 0;
 namespace chip {
 
 // Define static memebers
@@ -129,7 +140,7 @@ void OTAImageProcessorImpl::HandlePrepareDownload(intptr_t context)
 
     ChipLogProgress(SoftwareUpdate, "HandlePrepareDownload");
 
-    CORE_CRITICAL_SECTION(bootloader_init();)
+//    CORE_CRITICAL_SECTION(bootloader_init();)
     mSlotId                                 = 0; // Single slot until we support multiple images
     writeBufOffset                          = 0;
     mWriteOffset                            = 0;
@@ -139,42 +150,84 @@ void OTAImageProcessorImpl::HandlePrepareDownload(intptr_t context)
 
     // Not calling bootloader_eraseStorageSlot(mSlotId) here because we erase during each write
 
-    imageProcessor->mDownloader->OnPreparedForDownload(err == SL_BOOTLOADER_OK ? CHIP_NO_ERROR : CHIP_ERROR_INTERNAL);
+    imageProcessor->mDownloader->OnPreparedForDownload(CHIP_NO_ERROR);
 }
 
 void OTAImageProcessorImpl::HandleFinalize(intptr_t context)
 {
     uint32_t err          = SL_BOOTLOADER_OK;
+    int32_t status = 0;
+	int32_t fin_chunk = 0;
     auto * imageProcessor = reinterpret_cast<OTAImageProcessorImpl *>(context);
     if (imageProcessor == nullptr)
     {
         return;
     }
-
+    if(last == 1)
+    {
+        ChipLogProgress(SoftwareUpdate, "OTA image downloaded successfully in HandleFinalize");
+        return;
+    }
     // Pad the remainder of the write buffer with zeros and write it to bootloader storage
     if (writeBufOffset != 0)
     {
         // Account for last bytes of the image not yet written to storage
         imageProcessor->mParams.downloadedBytes += writeBufOffset;
 
-        while (writeBufOffset != kAlignmentBytes)
+        /*while (writeBufOffset != kAlignmentBytes)
         {
             writeBuffer[writeBufOffset] = 0;
             writeBufOffset++;
-        }
+        }*/
+    // Send RPS header which is received as first chunk
+    ChipLogProgress(SoftwareUpdate, "In finalize flag = %d", flag);
 
-        CORE_CRITICAL_SECTION(err = bootloader_eraseWriteStorage(mSlotId, mWriteOffset, writeBuffer, kAlignmentBytes);)
-        if (err)
+    //CORE_CRITICAL_SECTION(err = bootloader_eraseWriteStorage(mSlotId, mWriteOffset, writeBuffer, kAlignmentBytes);) //Mani
+
+    count = count + writeBufOffset;
+    ChipLogProgress(SoftwareUpdate, "Total size: %lu",(long unsigned int) total_size);
+    ChipLogProgress(SoftwareUpdate, "Count: %lu",(long unsigned int) count);
+    ChipLogProgress(SoftwareUpdate, "Write_Buff_Offset before: %lu",(long unsigned int) writeBufOffset);
+    if(count >= total_size)
+    {
+        writeBufOffset = writeBufOffset - (count - total_size);
+        last=1;
+    }
+    ChipLogProgress(SoftwareUpdate, "payload size kAlignmentBytes: %lu",(long unsigned int) kAlignmentBytes);
+    ChipLogProgress(SoftwareUpdate, "Write_Buff_Offset after: %lu",(long unsigned int) writeBufOffset);
+  /*  for(int m=0; m<writeBufOffset; m=m+4)
+    {
+        ChipLogProgress(SoftwareUpdate, "data: %x%x%x%x", (long unsigned int) writeBuffer[m], (long unsigned int) writeBuffer[m+1], (long unsigned int) writeBuffer[m+2], (long unsigned int) writeBuffer[m+3]);
+    }*/
+    ChipLogProgress(SoftwareUpdate, "payload size writeBufOffset: %lu",(long unsigned int) writeBufOffset);
+	status = sl_si91x_fwup_load(writeBuffer, writeBufOffset);
+	ChipLogProgress(SoftwareUpdate, "Status : %d", status);
+		//ChipLogProgress(SoftwareUpdate, "fin_chunk : %d", fin_chunk);
+        /*if (err)
         {
             ChipLogError(SoftwareUpdate, "ERROR: In HandleFinalize bootloader_eraseWriteStorage() error %ld", err);
             imageProcessor->mDownloader->EndDownload(CHIP_ERROR_WRITE_FAILED);
             return;
+        }*/
+        if (status != 0) {
+            ChipLogProgress(SoftwareUpdate, "In HandleFinalize for last chunk status: 0x%lX", status);
+            if (status == SL_STATUS_FW_UPDATE_DONE) {
+                ChipLogProgress(SoftwareUpdate,"M4 Firmware update complete");
+                osDelay(5000);
+                // send system reset request to reset the MCU and upgrade the m4 image
+                ChipLogProgress(SoftwareUpdate,"SoC Soft Reset initiated!");
+                sl_si91x_soc_soft_reset();
+            } else {
+            ChipLogError(SoftwareUpdate, "ERROR: In HandleFinalize for last chunk rsi_fwup() error %ld", status);
+            imageProcessor->mDownloader->EndDownload(CHIP_ERROR_WRITE_FAILED);
+            return;
         }
+    }
     }
 
     imageProcessor->ReleaseBlock();
 
-    ChipLogProgress(SoftwareUpdate, "OTA image downloaded successfully");
+    ChipLogProgress(SoftwareUpdate, "OTA image downloaded successfully in HandleFinalize");
 }
 
 void OTAImageProcessorImpl::HandleApply(intptr_t context)
@@ -186,7 +239,9 @@ void OTAImageProcessorImpl::HandleApply(intptr_t context)
     // Force KVS to store pending keys such as data from StoreCurrentUpdateInfo()
     chip::DeviceLayer::PersistedStorage::KeyValueStoreMgrImpl().ForceKeyMapSave();
 
-    CORE_CRITICAL_SECTION(err = bootloader_verifyImage(mSlotId, NULL);)
+    ChipLogProgress(SoftwareUpdate, "OTA image downloaded successfully in HandleApply");
+
+  /*  CORE_CRITICAL_SECTION(err = bootloader_verifyImage(mSlotId, NULL);)
     if (err != SL_BOOTLOADER_OK)
     {
         ChipLogError(SoftwareUpdate, "ERROR: bootloader_verifyImage() error %ld", err);
@@ -207,7 +262,7 @@ void OTAImageProcessorImpl::HandleApply(intptr_t context)
     }
 
     // This reboots the device
-    CORE_CRITICAL_SECTION(bootloader_rebootAndInstall();)
+    CORE_CRITICAL_SECTION(bootloader_rebootAndInstall();) */
 }
 
 void OTAImageProcessorImpl::HandleAbort(intptr_t context)
@@ -225,6 +280,7 @@ void OTAImageProcessorImpl::HandleAbort(intptr_t context)
 void OTAImageProcessorImpl::HandleProcessBlock(intptr_t context)
 {
     uint32_t err          = SL_BOOTLOADER_OK;
+    int32_t status = 0;
     auto * imageProcessor = reinterpret_cast<OTAImageProcessorImpl *>(context);
     if (imageProcessor == nullptr)
     {
@@ -259,20 +315,129 @@ void OTAImageProcessorImpl::HandleProcessBlock(intptr_t context)
         {
             writeBufOffset = 0;
 
-            CORE_CRITICAL_SECTION(err = bootloader_eraseWriteStorage(mSlotId, mWriteOffset, writeBuffer, kAlignmentBytes);)
-            if (err)
+ //           CORE_CRITICAL_SECTION(err = bootloader_eraseWriteStorage(mSlotId, mWriteOffset, writeBuffer, kAlignmentBytes);)
+ //           if (err)
+            if(flag == 0)
             {
-                ChipLogError(SoftwareUpdate, "ERROR: In HandleProcessBlock bootloader_eraseWriteStorage() error %ld", err);
-                imageProcessor->mDownloader->EndDownload(CHIP_ERROR_WRITE_FAILED);
-                return;
+#ifdef M4_OTAF_DF
+                ChipLogProgress(SoftwareUpdate, "M4_OTAF_DF enabled");
+#endif
+#ifdef CHIP_917
+                ChipLogProgress(SoftwareUpdate, "CHIP_917 enabled");
+#endif
+                for(int m=0; m<kAlignmentBytes; m=m+4)
+                {
+                    ChipLogProgress(SoftwareUpdate, " flag = 0 case data: %x%x%x%x", (long unsigned int) writeBuffer[m], (long unsigned int) writeBuffer[m+1], (long unsigned int) writeBuffer[m+2], (long unsigned int) writeBuffer[m+3]);
+                }
+            }
+            else if(flag == 1){
+           /*     for(int m=0; m<kAlignmentBytes; m=m+4)
+                {
+                    ChipLogProgress(SoftwareUpdate, "data: %x%x%x%x", (long unsigned int) writeBuffer[m], (long unsigned int) writeBuffer[m+1], (long unsigned int) writeBuffer[m+2], (long unsigned int) writeBuffer[m+3]);
+                }*/
+                // Send RPS header which is received as first chunk
+                ChipLogProgress(SoftwareUpdate, "In start flag = %d", flag);
+                ChipLogProgress(SoftwareUpdate, "payload size kAlignmentBytes: %lu",(long unsigned int) kAlignmentBytes);
+                status = sl_si91x_fwup_start(writeBuffer);
+
+                ChipLogProgress(SoftwareUpdate, "In flag 1 case start status: 0x%lX", status);
+                //flag = 2;
+          /*      for(int m=0; m<kAlignmentBytes; m=m+4)
+                {
+                    ChipLogProgress(SoftwareUpdate, "data: %x%x%x%x", (long unsigned int) writeBuffer[m], (long unsigned int) writeBuffer[m+1], (long unsigned int) writeBuffer[m+2], (long unsigned int) writeBuffer[m+3]);
+                }*/
+
+                // Send RPS content
+                ChipLogProgress(SoftwareUpdate, "In load flag = %d", flag);
+              //  ChipLogProgress(SoftwareUpdate, "payload size kAlignmentBytes: %lu",(long unsigned int) kAlignmentBytes);
+                status = sl_si91x_fwup_load(writeBuffer, kAlignmentBytes);
+                ChipLogProgress(SoftwareUpdate, "In flag 1 case status: 0x%lX", status);
+                total_size = writeBuffer[8]+256*writeBuffer[9]+256*256*writeBuffer[10]+256*256*256*writeBuffer[11] + 64;
+                ChipLogProgress(SoftwareUpdate, "Total size: %lu",(long unsigned int) total_size);
+                count = count + kAlignmentBytes;
+                ChipLogProgress(SoftwareUpdate, "Count: %lu",(long unsigned int) count);
+                if(count % 64 == 0)
+                {
+                    ChipLogProgress(SoftwareUpdate, "Good to go");
+                }
+                else
+                {
+                    ChipLogProgress(SoftwareUpdate, "Stop");
+                    ChipLogProgress(SoftwareUpdate, "count = %d", count);
+                }
+            }
+            else
+            {
+                // Send RPS content
+                //ChipLogProgress(SoftwareUpdate, "In load flag = %d", flag);
+                count = count + kAlignmentBytes;
+                //ChipLogProgress(SoftwareUpdate, "payload size kAlignmentBytes: %lu",(long unsigned int) kAlignmentBytes);
+                //ChipLogProgress(SoftwareUpdate, "Count: %lu",(long unsigned int) count);
+                if(count % 64 == 0)
+                {
+                     //ChipLogProgress(SoftwareUpdate, "Good to go");
+                }
+                else
+                {
+                    ChipLogProgress(SoftwareUpdate, "Stop");
+                    ChipLogProgress(SoftwareUpdate, "count = %d", count);
+                }
+                if(count >= total_size)
+                {
+                    length = kAlignmentBytes - (count - total_size);
+               /*     for(int m=0; m<length; m=m+4)
+                    {
+                         ChipLogProgress(SoftwareUpdate, "data: %x%x%x%x", (long unsigned int) writeBuffer[m], (long unsigned int) writeBuffer[m+1], (long unsigned int) writeBuffer[m+2], (long unsigned int) writeBuffer[m+3]);
+                    } */
+                    last = 1;
+                }
+                else
+                {
+	                length = kAlignmentBytes;
+                }
+          //      ChipLogProgress(SoftwareUpdate, "length: %lu",(long unsigned int) length);
+                /*for(int m=0; m<length; m=m+4)
+                {
+                    ChipLogProgress(SoftwareUpdate, "data: %x%x%x%x", (long unsigned int) writeBuffer[m], (long unsigned int) writeBuffer[m+1], (long unsigned int) writeBuffer[m+2], (long unsigned int) writeBuffer[m+3]);
+                }*/
+         //       ChipLogProgress(SoftwareUpdate, "payload size length: %lu",length);
+                status = sl_si91x_fwup_load(writeBuffer, length);
+	            if (status != 0) {
+					ChipLogProgress(SoftwareUpdate, "status: 0x%lX", status);
+                    if (status == SL_STATUS_FW_UPDATE_DONE) {
+                        ChipLogProgress(SoftwareUpdate, "M4 Firmware update complete");
+                        // send system reset request to reset the MCU and upgrade the m4 image
+                        sl_si91x_soc_soft_reset();
+                    }
+                    else {
+                        ChipLogError(SoftwareUpdate, "ERROR: In HandleFinalize for middle chunk sl_si91x_fwup_load() error %ld", status);
+                        imageProcessor->mDownloader->EndDownload(CHIP_ERROR_WRITE_FAILED);
+                        return;
+                    }
+                }
+            }
+            //CORE_CRITICAL_SECTION(err = bootloader_eraseWriteStorage(mSlotId, mWriteOffset, writeBuffer, kAlignmentBytes);) //Mani
+            /*if (err)
+             {
+                 ChipLogError(SoftwareUpdate, "ERROR: In HandleProcessBlock bootloader_eraseWriteStorage() error %ld", err);
+                 imageProcessor->mDownloader->EndDownload(CHIP_ERROR_WRITE_FAILED);
+                 return;
             }
             mWriteOffset += kAlignmentBytes;
             imageProcessor->mParams.downloadedBytes += kAlignmentBytes;
-        }
-    }
+            }*/
+           if(flag < 3)
+           {
+              flag++;
+              ChipLogProgress(SoftwareUpdate,"flag value increased = %d",flag)
+           }
+           mWriteOffset += kAlignmentBytes;
+           imageProcessor->mParams.downloadedBytes += kAlignmentBytes;
+         }
+     }
+     imageProcessor->mDownloader->FetchNextData();
+ }
 
-    imageProcessor->mDownloader->FetchNextData();
-}
 
 CHIP_ERROR OTAImageProcessorImpl::ProcessHeader(ByteSpan & block)
 {

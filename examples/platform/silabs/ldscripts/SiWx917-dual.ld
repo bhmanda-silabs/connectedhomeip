@@ -66,6 +66,8 @@ SECTIONS
     KEEP(*(.init))
     KEEP(*(.fini))
 
+    *(EXCLUDE_FILE(*rsi_hal_mcu_m4_ram.o *sl_si91x_bus.o *sli_si91x_multithreaded.o *sl_si91x_driver.o *croutine.o *event_groups.o *list.o *queue.o *stream_buffer.o *tasks.o *timers.o *cmsis_os2.o *freertos_umm_malloc_host.o *port.o *heap_*.o) .text*)
+
     /* .ctors */
     *crtbegin.o(.ctors)
     *crtbegin?.o(.ctors)
@@ -126,6 +128,23 @@ SECTIONS
 
     *(vtable)
     *(.data*)
+    *rsi_hal_mcu_m4_ram.o(.text*)
+	*sl_si91x_driver.o(.text*)
+	*sl_si91x_bus.o(.text*)
+	*sli_si91x_multithreaded.o(.text*)
+	*rsi_deepsleep_soc.o(.text*)
+	*croutine.o(.text*)
+	*event_groups.o(.text*)
+	*list.o(.text*)
+	*queue.o(.text*)
+	*cmsis_os2.o(.text*)
+	*stream_buffer.o(.text*)
+	*tasks.o(.text*)
+	*timers.o(.text*)
+	*freertos_umm_malloc_host.o(.text*)
+	*port.o(.text*)
+	*heap_*.o(.text*)
+
     . = ALIGN (4);
     PROVIDE (__ram_func_section_start = .);
     *(.ram)
