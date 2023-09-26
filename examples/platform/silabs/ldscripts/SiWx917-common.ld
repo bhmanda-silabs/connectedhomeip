@@ -40,7 +40,7 @@ SECTIONS
 	{
 		KEEP(*(.isr_vector))
      	KEEP(*(.reset_handler))
-		*(EXCLUDE_FILE(*sl_si91x_bus.o *sl_si91x_driver.o *sli_si91x_multithreaded.o *rsi_hal_mcu_m4_ram.o *croutine.o *event_groups.o *list.o *queue.o *stream_buffer.o *tasks.o *timers.o *cmsis_os2.o *freertos_umm_malloc_host.o *port.o *heap_*.o) .text*)
+		*(EXCLUDE_FILE(*OTAImageProcessorImpl.o *sl_si91x_bus.o *sl_si91x_driver.o *sli_si91x_multithreaded.o *rsi_hal_mcu_m4_ram.o *croutine.o *event_groups.o *list.o *queue.o *stream_buffer.o *tasks.o *timers.o *cmsis_os2.o *freertos_umm_malloc_host.o *malloc_buffers.o *siwx917_soc_ncp_host.o *port.o *heap_*.o) .text*)
 		
     /* .ctors */
     *crtbegin.o(.ctors)
@@ -142,8 +142,11 @@ SECTIONS
 		*tasks.o(.text*)
 		*timers.o(.text*)
 		*freertos_umm_malloc_host.o(.text*)
+		*siwx917_soc_ncp_host.o(.text*)
+		*malloc_buffers.o(.text*)
 		*port.o(.text*)
 		*heap_*.o(.text*)
+		*OTAImageProcessorImpl.o(.text*)
 
     . = ALIGN(4);
     /* preinit data */
