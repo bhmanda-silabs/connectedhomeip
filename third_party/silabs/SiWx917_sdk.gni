@@ -64,6 +64,7 @@ template("siwx917_sdk") {
       "${sdk_support_root}/matter/si91x/siwx917/BRD4338A/config",
 
       "${chip_root}/src/platform/silabs/rs911x",
+      "${chip_root}/src/platform/silabs/wifi",
 
       # ble component
       "${wifi_sdk_root}/components/device/silabs/si91x/wireless/ble/inc",
@@ -256,7 +257,7 @@ template("siwx917_sdk") {
     }
 
     defines += [ "LWIP_NETIF_API=1" ]
-    if (lwip_ipv4) {
+    if (chip_enable_wifi_ipv4) {
       defines += [
         "LWIP_IPV4=1",
 
