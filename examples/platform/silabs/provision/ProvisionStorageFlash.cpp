@@ -664,16 +664,9 @@ CHIP_ERROR Storage::SignWithDeviceAttestationKey(const ByteSpan & message, Mutab
     }
 #endif // SL_MATTER_ENABLE_EXAMPLE_CREDENTIALS
     ReturnErrorOnFailure(err);
-#if (defined(SLI_SI91X_MCU_INTERFACE) && SLI_SI91X_MCU_INTERFACE)
-    uint8_t key_buffer[kDeviceAttestationKeySizeMax] = { 0 };
-    MutableByteSpan private_key(key_buffer);
-    AttestationKey::Unwrap(temp, size, private_key);
-    return AttestationKey::SignMessageWithKey((const uint8_t *) key_buffer, message, signature);
-#else
     AttestationKey key;
     ReturnErrorOnFailure(key.Import(temp, size));
     return key.SignMessage(message, signature);
-#endif // SLI_SI91X_MCU_INTERFACE
 }
 
 //

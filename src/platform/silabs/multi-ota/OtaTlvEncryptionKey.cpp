@@ -1,14 +1,25 @@
 #include "OtaTlvEncryptionKey.h"
 #include <lib/support/CodeUtils.h>
 #include <platform/silabs/SilabsConfig.h>
-#include <sl_psa_crypto.h>
 #include <stdio.h>
 #include <string.h>
+
+#ifndef SL_WIFI
+#include <sl_psa_crypto.h>
+#else
+#include "mbedtls/cipher.h"
+#include "mbedtls/platform.h"
+#include "mbedtls/aes.h"
+#endif
 
 namespace chip {
 namespace DeviceLayer {
 namespace Silabs {
 namespace OtaTlvEncryptionKey {
+
+uint8_t sValue[128] = { 0 };
+size_t sSize = 0;
+uint8_t mKey[16]; // Add a member variable to store the key
 
 using SilabsConfig = chip::DeviceLayer::Internal::SilabsConfig;
 
@@ -52,6 +63,26 @@ CHIP_ERROR OtaTlvEncryptionKey::Import(const uint8_t * key, size_t key_len)
     return CHIP_NO_ERROR;
 }
 
+// #ifdef SL_WIFI
+// int importCallback(void * ctx, int tag, unsigned char * value, size_t size)
+// {
+//     if (MBEDTLS_ASN1_OCTET_STRING == tag)
+//     {
+//         MutableByteSpan * key = (MutableByteSpan *) ctx;
+//         memcpy(key->data(), value, size);
+//         key->reduce_size(size);
+//     }
+//     return 0;
+// }
+// CHIP_ERROR OtaTlvEncryptionKey::Unwrap(const uint8_t * asn1, size_t size, MutableByteSpan & key)
+// {
+//     int error     = 0;
+//     uint8_t * p   = (uint8_t *) asn1;
+//     uint8_t * end = p + size;
+//     error         = mbedtls_asn1_traverse_sequence_of(&p, end, 0, 0, 0, 0, importCallback, &key);
+//     return error ? CHIP_ERROR_INTERNAL : CHIP_NO_ERROR;
+// }
+// #else
 CHIP_ERROR OtaTlvEncryptionKey::Decrypt(MutableByteSpan & block, uint32_t & mIVOffset)
 {
     constexpr uint8_t au8Iv[] = { 0x00, 0x00, 0x00, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x00, 0x00, 0x00, 0x00 };
@@ -123,7 +154,7 @@ CHIP_ERROR OtaTlvEncryptionKey::Decrypt(MutableByteSpan & block, uint32_t & mIVO
 
     return CHIP_NO_ERROR;
 }
-
+// #endif
 } // namespace OtaTlvEncryptionKey
 } // namespace Silabs
 } // namespace DeviceLayer

@@ -31,14 +31,6 @@ using namespace ::chip::DeviceLayer::Internal;
 
 namespace chip {
 
-typedef enum
-{
-    APPLICATION,
-    BOOTLOADER,
-    FACTORY_DATA,
-    WIFI_917_TA_M4_COMBINED,
-} OTAImageType;
-
 #if SL_MATTER_ENABLE_OTA_ENCRYPTION
 constexpr uint8_t au8Iv[] = { 0x00, 0x00, 0x00, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x00, 0x00, 0x00, 0x00 };
 #endif
@@ -53,6 +45,8 @@ CHIP_ERROR OTATlvProcessor::Process(ByteSpan & block)
     {
         mProcessedLength += bytes;
         block = block.SubSpan(bytes);
+        ChipLogDetail(SoftwareUpdate, "mProcessedLength:: %ld", mProcessedLength);
+        ChipLogDetail(SoftwareUpdate, "mLength:: %ld", mLength);
         if (mProcessedLength == mLength)
         {
             status = ExitAction();
@@ -61,6 +55,7 @@ CHIP_ERROR OTATlvProcessor::Process(ByteSpan & block)
                 // If current block was processed fully and the block still contains data, it
                 // means that the block contains another TLV's data and the current processor
                 // should be changed by OTAMultiImageProcessorImpl.
+                ChipLogDetail(SoftwareUpdate, "CHIP_OTA_CHANGE_PROCESSOR");
                 return CHIP_OTA_CHANGE_PROCESSOR;
             }
         }
@@ -113,6 +108,20 @@ CHIP_ERROR OTADataAccumulator::Accumulate(ByteSpan & block)
 }
 
 #ifdef SL_MATTER_ENABLE_OTA_ENCRYPTION
+// #ifdef SL_WIFI
+// CHIP_ERROR OTATlvProcessor::vOtaProcessInternalEncryption(MutableByteSpan & block)
+// {
+//     uint8_t key_buffer[kOTAEncryptionMbdtlsKeyLength] = { 0 };
+//     uint8_t temp[kOTAEncryptionMbdtlsKeyLength] = { 0 };
+//     size_t size                                = 0;
+//     CHIP_ERROR err                             = Flash::Get(Parameters::ID::kDacKey, temp, sizeof(temp), size);
+//     ReturnErrorOnFailure(err);
+//     MutableByteSpan private_key(key_buffer);
+//     AttestationKey::Unwrap(temp, size, private_key);
+//     key.Decrypt(block, private_key);
+//     return CHIP_NO_ERROR;
+// }
+// #else
 CHIP_ERROR OTATlvProcessor::vOtaProcessInternalEncryption(MutableByteSpan & block)
 {
     uint32_t keyId;
@@ -122,5 +131,6 @@ CHIP_ERROR OTATlvProcessor::vOtaProcessInternalEncryption(MutableByteSpan & bloc
 
     return CHIP_NO_ERROR;
 }
+// #endif
 #endif
 } // namespace chip

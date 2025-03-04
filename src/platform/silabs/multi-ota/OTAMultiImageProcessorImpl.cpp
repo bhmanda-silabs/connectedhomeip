@@ -35,7 +35,7 @@ extern "C" {
 #include "sl_core.h"
 #endif // SL_BTLCTRL_MUX
 #include "em_bus.h" // For CORE_CRITICAL_SECTION
-#ifndef SLI_SI91X_MCU_INTERFACE // required for 917 NCP
+#ifndef SLI_SI91X_MCU_INTERFACE // this is not required only for 917 SoC and it is needed for EFR host applications.
 #include "btl_interface.h"
 #endif // SLI_SI91X_MCU_INTERFACE
 }
@@ -115,7 +115,7 @@ void OTAMultiImageProcessorImpl::HandlePrepareDownload(intptr_t context)
 
     ChipLogProgress(SoftwareUpdate, "HandlePrepareDownload: started");
 
-#ifndef SLI_SI91X_MCU_INTERFACE // required for 917 NCP
+#ifndef SLI_SI91X_MCU_INTERFACE // this is not required only for 917 SoC and it is needed for EFR host applications.
     CORE_CRITICAL_SECTION(bootloader_init();)
 #endif
 
@@ -142,6 +142,7 @@ CHIP_ERROR OTAMultiImageProcessorImpl::ProcessPayload(ByteSpan & block)
 {
     CHIP_ERROR status = CHIP_NO_ERROR;
 
+    ChipLogDetail(SoftwareUpdate, "ProcessPayload");
     while (true)
     {
         if (!mCurrentProcessor)
@@ -150,11 +151,13 @@ CHIP_ERROR OTAMultiImageProcessorImpl::ProcessPayload(ByteSpan & block)
             ByteSpan tlvHeader{ mAccumulator.data(), sizeof(OTATlvHeader) };
             ReturnErrorOnFailure(SelectProcessor(tlvHeader));
             ReturnErrorOnFailure(mCurrentProcessor->Init());
+            ChipLogDetail(SoftwareUpdate, "mCurrentProcessor is Selected");
         }
 
         status = mCurrentProcessor->Process(block);
         if (status == CHIP_OTA_CHANGE_PROCESSOR)
         {
+            ChipLogDetail(SoftwareUpdate, "CHIP_OTA_CHANGE_PROCESSOR ");
             mAccumulator.Clear();
             mAccumulator.Init(sizeof(OTATlvHeader));
 
@@ -186,6 +189,8 @@ CHIP_ERROR OTAMultiImageProcessorImpl::SelectProcessor(ByteSpan & block)
 
     ReturnErrorOnFailure(reader.Read32(&header.tag).StatusCode());
     ReturnErrorOnFailure(reader.Read32(&header.length).StatusCode());
+    ChipLogDetail(SoftwareUpdate, "SelectProcessor header.tag:: %ld",header.tag);
+    ChipLogDetail(SoftwareUpdate, "SelectProcessor data length: %ld", header.length);
 
     auto pair = mProcessorMap.find(header.tag);
     if (pair == mProcessorMap.end())
@@ -426,7 +431,7 @@ void OTAMultiImageProcessorImpl::HandleApply(intptr_t context)
     ChipLogProgress(SoftwareUpdate, "HandleApply: Finished");
     // This reboots the device
     // TODO: check where to put this
-#ifndef SLI_SI91X_MCU_INTERFACE // required for 917 NCP
+#ifndef SLI_SI91X_MCU_INTERFACE // this is not required only for 917 SoC and it is needed for EFR host applications.
     CORE_CRITICAL_SECTION(bootloader_rebootAndInstall();)
 #endif
     // ConfigurationManagerImpl().StoreSoftwareUpdateCompleted();

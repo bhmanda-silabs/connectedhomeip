@@ -26,7 +26,7 @@
 extern "C" {
 #endif
 #include "sl_si91x_driver.h"
-#ifdef SLI_SI91X_MCU_INTERFACE
+#ifdef SLI_SI91X_MCU_INTERFACE // this is not required only for 917 SoC and it is needed for EFR host applications.
 #include "sl_si91x_hal_soc_soft_reset.h"
 #endif
 #ifdef __cplusplus
@@ -79,13 +79,14 @@ CHIP_ERROR OTAWiFiFirmwareProcessor::ProcessInternal(ByteSpan & block)
     if (!mDescriptorProcessed)
     {
         ReturnErrorOnFailure(ProcessDescriptor(block));
-#if OTA_ENCRYPTION_ENABLE
+#if SL_MATTER_ENABLE_OTA_ENCRYPTION
         /* 16 bytes to used to store undecrypted data because of unalignment */
         mAccumulator.Init(requestedOtaMaxBlockSize + 16);
 #endif
     }
 
-#if OTA_ENCRYPTION_ENABLE
+#if SL_MATTER_ENABLE_OTA_ENCRYPTION
+    ChipLogProgress(SoftwareUpdate,"Decrypting the block for WiFi");
     MutableByteSpan mBlock = MutableByteSpan(mAccumulator.data(), mAccumulator.GetThreshold());
     memcpy(&mBlock[0], &mBlock[requestedOtaMaxBlockSize], mUnalignmentNum);
     memcpy(&mBlock[mUnalignmentNum], block.data(), block.size());
@@ -105,6 +106,7 @@ CHIP_ERROR OTAWiFiFirmwareProcessor::ProcessInternal(ByteSpan & block)
     }
 
     OTATlvProcessor::vOtaProcessInternalEncryption(mBlock);
+    ChipLogProgress(SoftwareUpdate,"Decrypting is completeted");
     block = mBlock;
 #endif
 
@@ -158,7 +160,7 @@ CHIP_ERROR OTAWiFiFirmwareProcessor::ApplyAction()
     if (mReset)
     {
         ChipLogProgress(SoftwareUpdate, "WiFi Device OTA update complete");
-#ifdef SLI_SI91X_MCU_INTERFACE //only for SoC
+#ifdef SLI_SI91X_MCU_INTERFACE // This is not required only for 917 SoC and it is needed for EFR host applications.
         // send system reset request to reset the MCU and upgrade the m4 image
         ChipLogProgress(SoftwareUpdate, "SoC Soft Reset initiated!");
         // Reboots the device
