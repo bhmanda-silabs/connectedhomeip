@@ -525,6 +525,12 @@ template("efr32_sdk") {
       defines += [ "SL_MATTER_PROVISION_FLASH=0" ]
     }
 
+    if (sl_enable_rgb_led) {
+      defines += [ "SL_MATTER_RGB_LED_ENABLED=1" ]
+    } else {
+      defines += [ "SL_MATTER_RGB_LED_ENABLED=0" ]
+    }
+
     if (chip_enable_ble_rs911x) {
       defines += [
         "RSI_BLE_ENABLE=1",
@@ -943,6 +949,7 @@ template("efr32_sdk") {
         "${efr32_sdk_root}/platform/driver/leddrv/src/sl_simple_led.c",
         "${efr32_sdk_root}/platform/driver/leddrv/src/sl_simple_rgb_pwm_led.c",
         "${silabs_gen_folder}/autogen/sl_simple_led_instances.c",
+        "${silabs_gen_folder}/autogen/sl_simple_rgb_pwm_led_instances.c",
       ]
     }
 

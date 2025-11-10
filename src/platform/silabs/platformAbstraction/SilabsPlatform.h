@@ -21,6 +21,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <lib/core/CHIPError.h>
+
 namespace chip {
 namespace DeviceLayer {
 namespace Silabs {
