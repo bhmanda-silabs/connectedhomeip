@@ -60,7 +60,7 @@ extern "C" {
 
 #ifdef SL_CATALOG_SIMPLE_BUTTON_PRESENT
 #include "sl_simple_button_instances.h"
-#endif
+#endif  //ENABLE_WSTK_LEDS
 
 extern "C" {
 #include <mbedtls/platform.h>
@@ -93,6 +93,11 @@ extern "C" {
 #include "silabs_utils.h"
 #endif
 
+// Delay for PWM simulation to match RGBLEDWidget expectations
+#ifndef TICK_DELAY
+#define TICK_DELAY 2
+#endif
+
 #if defined(_SILICON_LABS_32B_SERIES_3)
 // To remove any ambiguities regarding the Flash aliases, use the below macro to ignore the 8 MSB.
 #define FLASH_GENERIC_MASK 0x00FFFFFF
@@ -105,6 +110,17 @@ sl_se_command_context_t cmd_ctx;
 }
 #endif // _SILICON_LABS_32B_SERIES_3
 
+#if (defined(SL_MATTER_RGB_LED_ENABLED) && SL_MATTER_RGB_LED_ENABLED == 1)
+namespace {
+struct RgbLedState
+{
+    uint16_t r;
+    uint16_t g;
+    uint16_t b;
+};
+static RgbLedState sRgbState = { 0, 0, 0 };
+} // namespace
+#endif // (defined(SL_MATTER_RGB_LED_ENABLED) && SL_MATTER_RGB_LED_ENABLED)
 namespace chip {
 namespace DeviceLayer {
 namespace Silabs {
@@ -217,6 +233,15 @@ void SilabsPlatform::InitLed(void)
 
 CHIP_ERROR SilabsPlatform::SetLed(bool state, uint8_t led)
 {
+    // If RGB LED support is enabled and caller targets index 0, map to RGB on/off like WiseMcu implementation.
+#if (defined(SL_MATTER_RGB_LED_ENABLED) && SL_MATTER_RGB_LED_ENABLED == 1)
+    if (led == 0)
+    {
+        (state) ? sl_simple_rgb_pwm_led_turn_on(sl_simple_rgb_pwm_led_rgb_led0.led_common.context)
+                : sl_simple_rgb_pwm_led_turn_off(sl_simple_rgb_pwm_led_rgb_led0.led_common.context);
+        return CHIP_NO_ERROR;
+    }
+#endif
     if (led >= SL_SIMPLE_LED_COUNT)
     {
         return CHIP_ERROR_INVALID_ARGUMENT;
@@ -237,6 +262,14 @@ bool SilabsPlatform::GetLedState(uint8_t led)
 
 CHIP_ERROR SilabsPlatform::ToggleLed(uint8_t led)
 {
+    // Provide RGB toggle behavior similar to WiseMcu when RGB index is targeted.
+#if (defined(SL_MATTER_RGB_LED_ENABLED) && SL_MATTER_RGB_LED_ENABLED == 1)
+    if (led == 0)
+    {
+        sl_simple_rgb_pwm_led_toggle(sl_simple_rgb_pwm_led_rgb_led0.led_common.context);
+        return CHIP_NO_ERROR;
+    }
+#endif
     if (led >= SL_SIMPLE_LED_COUNT)
     {
         return CHIP_ERROR_INVALID_ARGUMENT;
@@ -244,6 +277,43 @@ CHIP_ERROR SilabsPlatform::ToggleLed(uint8_t led)
     SL_LED_TOGGLE(SL_SIMPLE_LED_INSTANCE(led));
     return CHIP_NO_ERROR;
 }
+#if (defined(SL_MATTER_RGB_LED_ENABLED) && SL_MATTER_RGB_LED_ENABLED == 1)
+bool SilabsPlatform::GetRGBLedState(uint8_t led)
+{
+    return sl_simple_rgb_pwm_led_get_state(sl_simple_rgb_pwm_led_rgb_led0.led_common.context) == SL_LED_CURRENT_STATE_ON;
+}
+
+CHIP_ERROR SilabsPlatform::SetLedColor(uint8_t led, uint8_t red, uint8_t green, uint8_t blue)
+{
+    sRgbState.r = red * TICK_DELAY;
+    sRgbState.g = green * TICK_DELAY;
+    sRgbState.b = blue * TICK_DELAY;
+    sl_simple_rgb_pwm_led_set_color(sl_simple_rgb_pwm_led_rgb_led0.led_common.context, red, green, blue);
+    return CHIP_NO_ERROR;
+}
+
+CHIP_ERROR SilabsPlatform::GetLedColor(uint8_t led, uint16_t & r, uint16_t & g, uint16_t & b)
+{
+    // For now only a single RGB LED (index 0) is supported. Enforce argument validity.
+    if (led != 0)
+    {
+        return CHIP_ERROR_INVALID_ARGUMENT;
+    }
+    // Query hardware and scale directly into return & cache values.
+    uint16_t rawR = 0, rawG = 0, rawB = 0;
+    sl_simple_rgb_pwm_led_get_color(sl_simple_rgb_pwm_led_rgb_led0.led_common.context, &rawR, &rawG, &rawB);
+
+    r = rawR * TICK_DELAY;
+    g = rawG * TICK_DELAY;
+    b = rawB * TICK_DELAY;
+
+    // Keep shadow state in sync (other code may still rely on sRgbState)
+    sRgbState.r = r;
+    sRgbState.g = g;
+    sRgbState.b = b;
+    return CHIP_NO_ERROR;
+}
+#endif // (defined(SL_MATTER_RGB_LED_ENABLED) && SL_MATTER_RGB_LED_ENABLED == 1)
 #endif // ENABLE_WSTK_LEDS
 
 #if defined(SL_CATALOG_CUSTOM_MAIN_PRESENT)

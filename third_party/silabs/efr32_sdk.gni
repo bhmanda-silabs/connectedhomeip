@@ -912,6 +912,12 @@ template("efr32_sdk") {
         "${efr32_sdk_root}/platform/driver/leddrv/src/sl_led.c",
         "${efr32_sdk_root}/platform/driver/leddrv/src/sl_pwm_led.c",
         "${efr32_sdk_root}/platform/driver/leddrv/src/sl_simple_led.c",
+<<<<<<< HEAD
+=======
+        "${efr32_sdk_root}/platform/driver/leddrv/src/sl_simple_rgb_pwm_led.c",
+        "${silabs_gen_folder}/autogen/sl_simple_led_instances.c",
+        "${silabs_gen_folder}/autogen/sl_simple_rgb_pwm_led_instances.c",
+>>>>>>> 546d084a2e (Added efr rgb support)
       ]
      if (sl_enable_rgb_led) {
         sources += [
